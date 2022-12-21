@@ -22,7 +22,7 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "AssetsLocation")
 	FString AssetLocationOnDisk;
 	
-	UPROPERTY(Config, EditAnywhere, Category = "AssetBridgeCacheLocation")
-	FString AssetBridgeCacheLocation;
+	UPROPERTY(Config, EditAnywhere, Category = "AssetBridgeWorkingDir")
+	FString AssetBridgeWorkingDir;
 
 };

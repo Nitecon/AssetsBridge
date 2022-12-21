@@ -41,7 +41,7 @@ TSharedRef< FSlateStyleSet > FAssetsBridgeStyle::Create()
 	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("AssetsBridgeStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("AssetsBridge")->GetBaseDir() / TEXT("Resources"));
 
-	//Style->Set("AssetsBridge.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
+	//Style->Set("AssetsBridge.OpenSettingsWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
 	Style->Set("AssetsBridge.ContentSwapAction", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
 	Style->Set("AssetsBridge.ContentExportAction", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
 	Style->Set("AssetsBridge.ContentImportAction", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));

@@ -21,15 +21,20 @@ USTRUCT(BlueprintType)
 struct FBridgeAssets
 {
 	GENERATED_BODY()
+
+	/** The type of asset that is contained */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EBridgeType AssetType = EBridgeType::Unknown;
-	
+
+	/** If the item is a static mesh the pointer for it will be set here. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UStaticMesh* StaticMesh = nullptr;
-	
+
+	/** If the item is a skeletal mesh the pointer for it will be set here. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USkeletalMesh* SkeletalMesh = nullptr;
 
+	/** Where to find it in the content library. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString InternalPath = "";
 	
@@ -43,29 +48,32 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 	
-	/** This function will be bound to Command (by default it will bring up plugin window) */
+	/** This function will be bound to Command it will initiate the Swap Operation */
 	void SwapButtonClicked();
+	/** This function will be bound to Command it will initiate the Export Operation */
 	void ExportButtonClicked();
+	/** This function will be bound to Command it will initiate the Import Operation */
 	void ImportButtonClicked();
+	/** This function will be bound to Command it will initialize the settings menu */
 	void OpenSettingsMenu();
 	
-	FReply SaveAssetsLocation();
-	
 private:
-
+	/** This function is needed to register menus */
 	void RegisterMenus();
 
-	//Used to load our userWidget blueprint (which is a slate wrapper)
-	void LoadUserWidget();
+	/** This function finds all iems that the user currently has selected in content browser or in level editor */
 	TArray<FBridgeAssets> GetSelectedUserContext();
 
+	/** Returns the list of static meshes that are currently selected for processing */
 	TArray<AStaticMeshActor *> GetSelectedStaticMeshes();
-	
 
+	/** This holds the settings widget once initialized */
 	class UUserWidget* CreatedWidget = nullptr;
-	
+
+	/** Starts the settings plugins tab for the user to interact with settings. */
 	TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
 
 private:
+	/** The list of commands provided by this Plugin. */
 	TSharedPtr<class FUICommandList> PluginCommands;
 };

@@ -33,7 +33,7 @@ void FAssetsBridgeModule::StartupModule()
 	PluginCommands = MakeShareable(new FUICommandList);
 
 	PluginCommands->MapAction(
-		FAssetsBridgeCommands::Get().OpenPluginWindow,
+		FAssetsBridgeCommands::Get().OpenSettingsWindow,
 		FExecuteAction::CreateRaw(this, &FAssetsBridgeModule::OpenSettingsMenu),
 		FCanExecuteAction());
 	
@@ -87,18 +87,11 @@ void FAssetsBridgeModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AssetsBridgeTabName);
 }
 
-FReply FAssetsBridgeModule::SaveAssetsLocation()
-{
-	return FReply::Handled();
-}
-
 TSharedRef<SDockTab> FAssetsBridgeModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	//Load our user widget from blueprint.
-	LoadUserWidget();
-
+	// Set up some failure text first in case our widget doesn't load properly...
 	FText WidgetText = FText::Format(
-		LOCTEXT("WindowWidgetText", "Add code to {0} in {1} to override this window's contents"),
+		LOCTEXT("WindowWidgetText", "Failed to load content widget, fix this under {0} in {1}"),
 		FText::FromString(TEXT("FWrapperHelperTempateModule::OnSpawnPluginTab")),
 		FText::FromString(TEXT("WrapperHelperTempate.cpp"))
 		);
@@ -116,44 +109,22 @@ TSharedRef<SDockTab> FAssetsBridgeModule::OnSpawnPluginTab(const FSpawnTabArgs& 
 				.Text(WidgetText)
 			]
 		];
-	
-	//If we have loaded our widget, assign it
-	if (CreatedWidget)
-	{
-		//Log our widget's name
-		UE_LOG(LogTemp, Warning, TEXT("Created Widget: %s"), *CreatedWidget->GetName())
-		//Store our widget
-		TSharedRef<SWidget> UserSlateWidget = CreatedWidget->TakeWidget();
-
-		//Assign our widget to our tab's content
-		NewDockTab->SetContent(UserSlateWidget);
-
-	}
-
-	//Return our tab
-	return NewDockTab;
-}
-
-//This function does the magic of loading the entire widget from disk into an object.
-//Once we've loaded it, we then create a widget and store it to replace our slate UI with.
-void FAssetsBridgeModule::LoadUserWidget()
-{
-
-	UE_LOG(LogTemp, Warning, TEXT("Function: LoadUserWidget()"));
-
 	//This path is contained within the WrapperHelperTemplate Content folder
 	UClass* LoadedWidget = LoadObject<UClass>(NULL, TEXT("/AssetsBridge/BPW_Settings.BPW_Settings_C"), NULL, LOAD_None, NULL);
 	if (LoadedWidget)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("User Widget loaded successfully"));
-		
 		//If successfully loaded, store it for later use.
 		CreatedWidget = CreateWidget(GEditor->GetEditorWorldContext().World(), LoadedWidget);
+		if (CreatedWidget)
+		{
+			//Store our widget
+			TSharedRef<SWidget> UserSlateWidget = CreatedWidget->TakeWidget();
+			//Assign our widget to our tab's content
+			NewDockTab->SetContent(UserSlateWidget);
+		}
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Unable to loacate BP Widget inside our plugin's content folder."));
-	}
+	//Return our tab
+	return NewDockTab;
 }
 
 TArray<AStaticMeshActor *> FAssetsBridgeModule::GetSelectedStaticMeshes()
@@ -233,14 +204,10 @@ void FAssetsBridgeModule::SwapButtonClicked()
 							FText::FromString(outContent)
 					   );
 	FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-	
 }
 
 void FAssetsBridgeModule::ExportButtonClicked()
 {
-	// If content settings are not set show the tab else run the command
-	//FGlobalTabmanager::Get()->TryInvokeTab(AssetsBridgeTabName);
-	// Put your "OnButtonClicked" stuff here
 	FString outContent;
 	auto assets = GetSelectedUserContext();
 	for (auto item : assets)
@@ -259,18 +226,12 @@ void FAssetsBridgeModule::ExportButtonClicked()
 	FMessageDialog::Open(EAppMsgType::Ok, DialogText);
 
 	
-	UnFbx::FFbxExporter* Exporter = UnFbx::FFbxExporter::GetInstance();
-	bool bIsCanceled;
-	bool bExportAll;
-	Exporter->FillExportOptions(false, false, *FString(TEXT("")),bIsCanceled, bExportAll );
+	// Create manifest file to save & export each asset.
 	
 }
 
 void FAssetsBridgeModule::ImportButtonClicked()
 {
-	// If content settings are not set show the tab else run the command
-	//FGlobalTabmanager::Get()->TryInvokeTab(AssetsBridgeTabName);
-	// Put your "OnButtonClicked" stuff here
 	FString outContent;
 	auto assets = GetSelectedUserContext();
 	for (auto item : assets)
@@ -287,12 +248,7 @@ void FAssetsBridgeModule::ImportButtonClicked()
 							FText::FromString(outContent)
 					   );
 	FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-
-	
-	UnFbx::FFbxExporter* Exporter = UnFbx::FFbxExporter::GetInstance();
-	bool bIsCanceled;
-	bool bExportAll;
-	Exporter->FillExportOptions(false, false, *FString(TEXT("")),bIsCanceled, bExportAll );
+	// Read config file & Import selected objects.
 	
 }
 
@@ -312,7 +268,7 @@ void FAssetsBridgeModule::RegisterMenus()
 		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
 		{
 			FToolMenuSection& Section = Menu->FindOrAddSection("WindowLayout");
-			Section.AddMenuEntryWithCommandList(FAssetsBridgeCommands::Get().OpenPluginWindow, PluginCommands);
+			Section.AddMenuEntryWithCommandList(FAssetsBridgeCommands::Get().OpenSettingsWindow, PluginCommands);
 		}
 	}
 
@@ -321,18 +277,11 @@ void FAssetsBridgeModule::RegisterMenus()
 		{
 			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("Settings");
 			{
-				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().OpenPluginWindow));
+				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().OpenSettingsWindow));
 				Entry.SetCommandList(PluginCommands);
 			}
 		}
 	}
-	/*{
-		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
-		{
-			FToolMenuSection& Section = Menu->FindOrAddSection("WindowLayout");
-			Section.AddMenuEntryWithCommandList(FAssetsBridgeCommands::Get().ContentSwapAction, PluginCommands);
-		}
-	}*/
 
 	{
 		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar.PlayToolBar");

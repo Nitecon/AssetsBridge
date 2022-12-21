@@ -19,7 +19,7 @@ public:
 	virtual void RegisterCommands() override;
 
 public:
-	TSharedPtr< FUICommandInfo > OpenPluginWindow;
+	TSharedPtr< FUICommandInfo > OpenSettingsWindow;
 	TSharedPtr< FUICommandInfo > ContentSwapAction;
 	TSharedPtr< FUICommandInfo > ContentExportAction;
 	TSharedPtr< FUICommandInfo > ContentImportAction;
