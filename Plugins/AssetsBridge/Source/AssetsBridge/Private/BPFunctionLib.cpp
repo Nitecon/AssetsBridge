@@ -17,8 +17,7 @@ void UBPFunctionLib::GetSelectedFolderPath(FString& OutContentLocation)
 	TArray<FAssetData> OutSelectedAssets;
 	TArray<FString> OutSelectedFolders;
 	TArray<FString> OutViewFolders;
-	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(
-		"ContentBrowser");
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
 	IContentBrowserSingleton& ContentBrowserSingleton = ContentBrowserModule.Get();
 
 	ContentBrowserSingleton.GetSelectedFolders(OutSelectedFolders);
@@ -212,11 +211,9 @@ void UBPFunctionLib::GetBridgeWorkingDir(FString& OutContentLocation)
 
 void UBPFunctionLib::SetBridgeWorkingDir(FString InLocation)
 {
-	
 	UABSettings* Settings = GetMutableDefault<UABSettings>();
 	if (Settings != nullptr)
 	{
-		
 		Settings->AssetBridgeWorkingDir = InLocation;
 		Settings->SaveConfig();
 	}

@@ -45,8 +45,7 @@ public:
 	 * @return Provides an FString to be used which contains the location of the file.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
-	static FString GetOSFileLocation(const FString& DialogTitle,
-	                                 const FString& FileTypes = TEXT("JSON files (*.json)|*.json"));
+	static FString GetOSFileLocation(const FString& DialogTitle, const FString& FileTypes = TEXT("JSON files (*.json)|*.json"));
 
 	/**
 	 * Reads a file and returns the content as a string.
@@ -91,8 +90,7 @@ public:
 	* @param bOutSuccess Returns true of operation is successful.
 	* @param OutInfoMessage Verbose information on the current operation.
 	*/
-	static void WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess,
-	                      FString& OutInfoMessage);
+	static void WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess, FString& OutInfoMessage);
 
 	/**
 	* Gets the Assets Bridge location related to this setting.

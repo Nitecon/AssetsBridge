@@ -2,7 +2,7 @@
 
 
 #include "BridgeManager.h"
-
+#include "UnrealEd/Private/FbxExporter.h"
 #include "AssetsBridge.h"
 
 UBridgeManager::UBridgeManager()

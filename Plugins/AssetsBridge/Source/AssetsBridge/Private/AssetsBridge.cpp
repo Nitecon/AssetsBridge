@@ -14,7 +14,7 @@
 #include "Selection.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/StaticMeshActor.h"
-#include "UnrealEd/Private/FbxExporter.h"
+
 
 
 static const FName AssetsBridgeTabName("Assets Bridge Configuration");
