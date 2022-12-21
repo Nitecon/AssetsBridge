@@ -158,10 +158,6 @@ void FAssetsBridgeModule::LoadUserWidget()
 
 TArray<AStaticMeshActor *> FAssetsBridgeModule::GetSelectedStaticMeshes()
 {
-	//IAssetRegistry &AssetRegistry = FModuleManager::GetModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
-	//FAssetData InstanceData = AssetRegistry.GetAssetByObjectPath(FSoftObjectPath(InstancePath));
-	//UMaterialInstanceConstant *MaterialInstance = Cast<UMaterialInstanceConstant>(UEditorAssetLibrary::LoadAsset(InstancePath));
-
 	USelection *SelectedActors = GEditor->GetSelectedActors();
 	TArray<AActor *> Actors;
 	TArray<AStaticMeshActor *> SelectedStaticMeshes;
@@ -221,9 +217,6 @@ TArray<FBridgeAssets> FAssetsBridgeModule::GetSelectedUserContext()
 
 void FAssetsBridgeModule::SwapButtonClicked()
 {
-	// If content settings are not set show the tab else run the command
-	//FGlobalTabmanager::Get()->TryInvokeTab(AssetsBridgeTabName);
-	// Put your "OnButtonClicked" stuff here
 	FString outContent;
 	auto assets = GetSelectedUserContext();
 	for (auto item : assets)
@@ -240,12 +233,6 @@ void FAssetsBridgeModule::SwapButtonClicked()
 							FText::FromString(outContent)
 					   );
 	FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-
-	
-	/*UnFbx::FFbxExporter* Exporter = UnFbx::FFbxExporter::GetInstance();
-	bool bIsCanceled;
-	bool bExportAll;
-	Exporter->FillExportOptions(false, false, *FString(TEXT("")),bIsCanceled, bExportAll );*/
 	
 }
 
@@ -363,18 +350,7 @@ void FAssetsBridgeModule::RegisterMenus()
 	}
 }
 
-FText FAssetsBridgeModule::GetAssetsLocation() const
-{
-	if(ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
-	{
-		UABSettings* Settings = GetMutableDefault<UABSettings>();
-		if (Settings != nullptr)
-		{
-			return FText::FromString(Settings->UnrealContentLocation);
-		}
-	}
-	return FText::FromString("Unknown");
-}
+
 
 #undef LOCTEXT_NAMESPACE
 	

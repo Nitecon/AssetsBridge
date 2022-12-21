@@ -29,6 +29,10 @@ struct FBridgeAssets
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USkeletalMesh* SkeletalMesh = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString InternalPath = "";
+	
 };
 
 class FAssetsBridgeModule : public IModuleInterface
@@ -44,7 +48,7 @@ public:
 	void ExportButtonClicked();
 	void ImportButtonClicked();
 	void OpenSettingsMenu();
-	FText GetAssetsLocation() const;
+	
 	FReply SaveAssetsLocation();
 	
 private:

@@ -24,4 +24,5 @@ public:
 	
 	UPROPERTY(Config, EditAnywhere, Category = "AssetBridgeCacheLocation")
 	FString AssetBridgeCacheLocation;
+
 };

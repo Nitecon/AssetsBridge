@@ -3,9 +3,12 @@
 
 #include "ABSettings.h"
 
+#include "ISettingsModule.h"
+
 UABSettings::UABSettings(const FObjectInitializer& obj)
 {
 	UnrealContentLocation = TEXT("Content/Assets");
 	AssetLocationOnDisk = TEXT("");
 	AssetBridgeCacheLocation = TEXT("");
 }
+

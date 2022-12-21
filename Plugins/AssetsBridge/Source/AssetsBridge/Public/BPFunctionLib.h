@@ -15,10 +15,8 @@ class UStruct;
 UCLASS()
 class ASSETSBRIDGE_API UBPFunctionLib : public UBlueprintFunctionLibrary
 {
-	
 	GENERATED_BODY()
-	
-	
+
 public:
 	/**
 	 * Finds the currently selected folder within the content tree / content browser view.
@@ -47,7 +45,8 @@ public:
 	 * @return Provides an FString to be used which contains the location of the file.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
-	static FString GetOSFileLocation(const FString& DialogTitle, const FString& FileTypes = TEXT("JSON files (*.json)|*.json"));
+	static FString GetOSFileLocation(const FString& DialogTitle,
+	                                 const FString& FileTypes = TEXT("JSON files (*.json)|*.json"));
 
 	/**
 	 * Reads a file and returns the content as a string.
@@ -72,22 +71,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
 	static void WriteStringToFile(FString FilePath, FString Data, bool& bOutSuccess, FString& OutInfoMessage);
 
-	/**
-	 * Sets the Assets Bridge content location where assets will be stored (root assets folder)
-	 *
-	 * @param OutContentLocation Gets the provided string from settings and applies value of the content location.
-	 */
-	UFUNCTION(BlueprintPure, Category="Assets Bridge Utilities")
-	static void GetABContentLocation(FString& OutContentLocation);
-
-	
-	/**
-	 * Sets the Assets Bridge content location where assets will be stored (root assets folder)
-	 *
-	 * @param ContentLocation Sets the provided string to the value of the content location.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
-	static void SetABContentLocation(FString& ContentLocation);
 
 	/**
 	 * Open a json file read it's content and convert it to a json object
@@ -98,8 +81,8 @@ public:
 	 *
 	 * @return The JsonObject content of your json file.
 	 */
-	static TSharedPtr<FJsonObject> ReadJson(FString FilePath, bool &bOutSuccess, FString &OutInfoMessage);
-	
+	static TSharedPtr<FJsonObject> ReadJson(FString FilePath, bool& bOutSuccess, FString& OutInfoMessage);
+
 	/**
 	* Open a json file read it's content and convert it to a json object
 	*
@@ -108,6 +91,54 @@ public:
 	* @param bOutSuccess Returns true of operation is successful.
 	* @param OutInfoMessage Verbose information on the current operation.
 	*/
-	static void WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool &bOutSuccess, FString &OutInfoMessage);
+	static void WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess,
+	                      FString& OutInfoMessage);
 
+	/**
+	* Gets the Assets Bridge location related to this setting.
+	*
+	* @param OutContentLocation Is set to the location for this setting to be consumed by blueprints etc.
+	*/
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Settings")
+	static void GetContentLocation(FString& OutContentLocation);
+
+	/**
+	* Sets the Assets Bridge config option for the related setting.
+	*
+	* @param InLocation Sets the provided string to the value of the content location.
+	*/
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Settings")
+	static void SetContentLocation(FString InLocation);
+
+	/**
+	* Gets the Assets Bridge location related to this setting.
+	*
+	* @param OutContentLocation Is set to the location for this setting to be consumed by blueprints etc.
+	*/
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Settings")
+	static void GetAssetsLocation(FString& OutContentLocation);
+
+	/**
+	* Sets the Assets Bridge config option for the related setting.
+	*
+	* @param InLocation Sets the provided string to the value of the content location.
+	*/
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Settings")
+	static void SetAssetsLocation(FString InLocation);
+
+	/**
+	* Gets the Assets Bridge location related to this setting.
+	*
+	* @param OutContentLocation Is set to the location for this setting to be consumed by blueprints etc.
+	*/
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Settings")
+	static void GetBridgeWorkingDir(FString& OutContentLocation);
+
+	/**
+	* Sets the Assets Bridge config option for the related setting.
+	*
+	* @param InLocation Sets the provided string to the value of the content location.
+	*/
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Settings")
+	static void SetBridgeWorkingDir(FString InLocation);
 };

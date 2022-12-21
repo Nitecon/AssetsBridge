@@ -17,9 +17,10 @@ void UBPFunctionLib::GetSelectedFolderPath(FString& OutContentLocation)
 	TArray<FAssetData> OutSelectedAssets;
 	TArray<FString> OutSelectedFolders;
 	TArray<FString> OutViewFolders;
-	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(
+		"ContentBrowser");
 	IContentBrowserSingleton& ContentBrowserSingleton = ContentBrowserModule.Get();
-	
+
 	ContentBrowserSingleton.GetSelectedFolders(OutSelectedFolders);
 	ContentBrowserSingleton.GetSelectedPathViewFolders(OutViewFolders);
 	// First select the last view item.
@@ -28,7 +29,6 @@ void UBPFunctionLib::GetSelectedFolderPath(FString& OutContentLocation)
 		//UE_LOG(LogTemp, Warning, TEXT("View Folder is: %s"), *Asset)
 		// We do a replace since "show all" in content browser can cause a change in the virtual path
 		OutContentLocation = Asset.Replace(TEXT("/All"),TEXT(""));
-		
 	}
 	// Now we iterate through the non view path and select here.
 	for (auto Asset : OutSelectedFolders)
@@ -37,16 +37,15 @@ void UBPFunctionLib::GetSelectedFolderPath(FString& OutContentLocation)
 		// We do a replace since "show all" in content browser can cause a change in the virtual path
 		OutContentLocation = Asset.Replace(TEXT("/All"),TEXT(""));
 	}
-	
 }
 
 FString UBPFunctionLib::GetOSDirectoryLocation(const FString& DialogTitle)
 {
-	if( IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get() )
+	if (IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get())
 	{
 		FString DestinationFolder;
 		const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
-		const FString DefaultLocation( FEditorDirectories::Get().GetLastDirectory( ELastDirectory::GENERIC_IMPORT ) );
+		const FString DefaultLocation(FEditorDirectories::Get().GetLastDirectory(ELastDirectory::GENERIC_IMPORT));
 
 		const bool bFolderSelected = DesktopPlatform->OpenDirectoryDialog(
 			ParentWindowHandle,
@@ -55,10 +54,10 @@ FString UBPFunctionLib::GetOSDirectoryLocation(const FString& DialogTitle)
 			DestinationFolder
 		);
 
-		if( bFolderSelected )
+		if (bFolderSelected)
 		{
 			FEditorDirectories::Get().SetLastDirectory(ELastDirectory::GENERIC_EXPORT, DestinationFolder);
-			return FPaths::ConvertRelativePathToFull( DestinationFolder );
+			return FPaths::ConvertRelativePathToFull(DestinationFolder);
 		}
 	}
 	return FString("Unknown");
@@ -66,12 +65,12 @@ FString UBPFunctionLib::GetOSDirectoryLocation(const FString& DialogTitle)
 
 FString UBPFunctionLib::GetOSFileLocation(const FString& DialogTitle, const FString& FileTypes)
 {
-	if( IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get() )
+	if (IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get())
 	{
 		FString DestinationFolder;
 		TArray<FString> OutFiles;
 		const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
-		const FString DefaultLocation( FEditorDirectories::Get().GetLastDirectory( ELastDirectory::GENERIC_IMPORT ) );
+		const FString DefaultLocation(FEditorDirectories::Get().GetLastDirectory(ELastDirectory::GENERIC_IMPORT));
 
 		const bool bFolderSelected = DesktopPlatform->OpenFileDialog(
 			ParentWindowHandle,
@@ -83,10 +82,10 @@ FString UBPFunctionLib::GetOSFileLocation(const FString& DialogTitle, const FStr
 			OutFiles
 		);
 
-		if( bFolderSelected && OutFiles.Num() > 0)
+		if (bFolderSelected && OutFiles.Num() > 0)
 		{
 			FEditorDirectories::Get().SetLastDirectory(ELastDirectory::GENERIC_EXPORT, DestinationFolder);
-			return FPaths::ConvertRelativePathToFull( OutFiles[0] );
+			return FPaths::ConvertRelativePathToFull(OutFiles[0]);
 		}
 	}
 	return FString("Unknown");
@@ -102,12 +101,12 @@ FString UBPFunctionLib::ReadStringFromFile(FString FilePath, bool& bOutSuccess, 
 	}
 
 	FString Result = "";
-	 if (!FFileHelper::LoadFileToString(Result, *FilePath))
-	 {
-		 bOutSuccess = false;
-	 	OutInfoMessage = FString::Printf(TEXT("unable to read file: '%s'"), *FilePath);
-	 	return "";
-	 }
+	if (!FFileHelper::LoadFileToString(Result, *FilePath))
+	{
+		bOutSuccess = false;
+		OutInfoMessage = FString::Printf(TEXT("unable to read file: '%s'"), *FilePath);
+		return "";
+	}
 	bOutSuccess = true;
 	OutInfoMessage = "success";
 	return Result;
@@ -123,25 +122,6 @@ void UBPFunctionLib::WriteStringToFile(FString FilePath, FString Data, bool& bOu
 	}
 	bOutSuccess = true;
 	OutInfoMessage = FString::Printf(TEXT("wrote file: %s"), *FilePath);
-}
-
-void UBPFunctionLib::GetABContentLocation(FString& OutContentLocation)
-{
-	UABSettings* Settings = GetMutableDefault<UABSettings>();
-	if (Settings != nullptr)
-	{
-		OutContentLocation =Settings->UnrealContentLocation;
-	}
-}
-
-void UBPFunctionLib::SetABContentLocation(FString& ContentLocation)
-{
-	UABSettings* Settings = GetMutableDefault<UABSettings>();
-	if (Settings != nullptr)
-	{
-		Settings->UnrealContentLocation = ContentLocation;
-		Settings->SaveConfig();
-	}
 }
 
 TSharedPtr<FJsonObject> UBPFunctionLib::ReadJson(FString FilePath, bool& bOutSuccess, FString& OutInfoMessage)
@@ -164,7 +144,8 @@ TSharedPtr<FJsonObject> UBPFunctionLib::ReadJson(FString FilePath, bool& bOutSuc
 	return ReturnObj;
 }
 
-void UBPFunctionLib::WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess,	FString& OutInfoMessage)
+void UBPFunctionLib::WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess,
+                               FString& OutInfoMessage)
 {
 	FString JsonString;
 	if (!FJsonSerializer::Serialize(JsonObject.ToSharedRef(), TJsonWriterFactory<>::Create(&JsonString, 0)))
@@ -179,5 +160,62 @@ void UBPFunctionLib::WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObj
 		return;
 	}
 	bOutSuccess = true;
-	OutInfoMessage = FString::Printf(TEXT("wrote json to file: %s"),*FilePath);
+	OutInfoMessage = FString::Printf(TEXT("wrote json to file: %s"), *FilePath);
+}
+
+void UBPFunctionLib::GetContentLocation(FString& OutContentLocation)
+{
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
+	if (Settings != nullptr)
+	{
+		OutContentLocation = Settings->UnrealContentLocation;
+	}
+}
+
+void UBPFunctionLib::SetContentLocation(FString InLocation)
+{
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
+	if (Settings != nullptr)
+	{
+		Settings->UnrealContentLocation = InLocation;
+		Settings->SaveConfig();
+	}
+}
+
+void UBPFunctionLib::GetAssetsLocation(FString& OutContentLocation)
+{
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
+	if (Settings != nullptr)
+	{
+		OutContentLocation = Settings->AssetLocationOnDisk;
+	}
+}
+
+void UBPFunctionLib::SetAssetsLocation(FString InLocation)
+{
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
+	if (Settings != nullptr)
+	{
+		Settings->AssetLocationOnDisk = InLocation;
+		Settings->SaveConfig();
+	}
+}
+
+void UBPFunctionLib::GetBridgeWorkingDir(FString& OutContentLocation)
+{
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
+	if (Settings != nullptr)
+	{
+		OutContentLocation = Settings->AssetBridgeCacheLocation;
+	}
+}
+
+void UBPFunctionLib::SetBridgeWorkingDir(FString InLocation)
+{
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
+	if (Settings != nullptr)
+	{
+		Settings->AssetBridgeCacheLocation = InLocation;
+		Settings->SaveConfig();
+	}
 }
