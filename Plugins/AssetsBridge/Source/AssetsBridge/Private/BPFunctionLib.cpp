@@ -212,9 +212,11 @@ void UBPFunctionLib::GetBridgeWorkingDir(FString& OutContentLocation)
 
 void UBPFunctionLib::SetBridgeWorkingDir(FString InLocation)
 {
+	
 	UABSettings* Settings = GetMutableDefault<UABSettings>();
 	if (Settings != nullptr)
 	{
+		
 		Settings->AssetBridgeCacheLocation = InLocation;
 		Settings->SaveConfig();
 	}
