@@ -4,6 +4,7 @@
 #include "BPFunctionLib.h"
 
 #include "ABSettings.h"
+#include "AssetsBridge.h"
 #include "ContentBrowserModule.h"
 #include "EditorDirectories.h"
 #include "IContentBrowserSingleton.h"
@@ -36,6 +37,14 @@ void UBPFunctionLib::GetSelectedFolderPath(FString& OutContentLocation)
 		// We do a replace since "show all" in content browser can cause a change in the virtual path
 		OutContentLocation = Asset.Replace(TEXT("/All"),TEXT(""));
 	}
+}
+
+void UBPFunctionLib::GetSelectedContentItems(TArray<FAssetData>& SelectedAssets)
+{
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	IContentBrowserSingleton& ContentBrowserSingleton = ContentBrowserModule.Get();
+
+	ContentBrowserSingleton.GetSelectedAssets(SelectedAssets);
 }
 
 FString UBPFunctionLib::GetOSDirectoryLocation(const FString& DialogTitle)

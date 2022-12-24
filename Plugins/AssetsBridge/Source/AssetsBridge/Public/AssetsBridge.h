@@ -11,11 +11,29 @@ class FMenuBuilder;
 class AStaticMeshActor;
 
 UENUM(BlueprintType)
-enum class EBridgeType : uint8 {
-	Unknown = 0 UMETA(DisplayName = "Unsupported"), 
+enum class EBridgeType : uint8
+{
+	Unknown = 0 UMETA(DisplayName = "Unsupported"),
 	StaticMesh = 1 UMETA(DisplayName = "Static Mesh"),
-	SkeletalMesh = 2  UMETA(DisplayName = "Skeletal Mesh"),
+	SkeletalMesh = 2 UMETA(DisplayName = "Skeletal Mesh"),
+	Animation = 3 UMETA(DisplayName = "Animation"),
 };
+
+static const TCHAR* EnumToString(EBridgeType InCurrentState)
+{
+	switch (InCurrentState)
+	{
+	case EBridgeType::StaticMesh:
+		return TEXT("Static Mesh");
+	case EBridgeType::SkeletalMesh:
+		return TEXT("Skeletal Mesh");
+	case EBridgeType::Animation:
+		return TEXT("Animation");
+	default:
+		return TEXT("Unknown");
+	}
+}
+
 
 USTRUCT(BlueprintType)
 struct FBridgeAssets
@@ -37,17 +55,45 @@ struct FBridgeAssets
 	/** Where to find it in the content library. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString InternalPath = "";
-	
+};
+
+USTRUCT(BlueprintType)
+struct FBridgeSelection
+{
+	GENERATED_BODY()
+
+	/** The name of the selected asset */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString ObjectNameInLevel = "Unknown";
+
+	/** The name of the selected asset */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform ObjectPositionInLevel = FTransform();
+
+	/** The type of asset that is contained */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EBridgeType AssetType = EBridgeType::Unknown;
+
+	/** If the item is a static mesh the pointer for it will be set here. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UStaticMesh* StaticMesh = nullptr;
+
+	/** If the item is a skeletal mesh the pointer for it will be set here. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USkeletalMesh* SkeletalMesh = nullptr;
+
+	/** Where to find it in the content library. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform ItemLocation = FTransform();
 };
 
 class FAssetsBridgeModule : public IModuleInterface
 {
 public:
-
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-	
+
 	/** This function will be bound to Command it will initiate the Swap Operation */
 	void SwapButtonClicked();
 	/** This function will be bound to Command it will initiate the Export Operation */
@@ -56,16 +102,13 @@ public:
 	void ImportButtonClicked();
 	/** This function will be bound to Command it will initialize the settings menu */
 	void OpenSettingsMenu();
-	
+
 private:
 	/** This function is needed to register menus */
 	void RegisterMenus();
 
 	/** This function finds all iems that the user currently has selected in content browser or in level editor */
-	TArray<FBridgeAssets> GetSelectedUserContext();
-
-	/** Returns the list of static meshes that are currently selected for processing */
-	TArray<AStaticMeshActor *> GetSelectedStaticMeshes();
+	TArray<AActor*> GetSelectedUserContext();
 
 	/** This holds the settings widget once initialized */
 	class UUserWidget* CreatedWidget = nullptr;

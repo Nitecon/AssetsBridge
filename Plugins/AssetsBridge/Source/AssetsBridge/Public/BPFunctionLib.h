@@ -27,6 +27,14 @@ public:
 	static void GetSelectedFolderPath(FString& OutContentLocation);
 
 	/**
+	 * Finds the currently selected items within the content tree / content browser view.
+	 *
+	 * @param SelectedAssets Appends the array with the currently selected items.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
+	static void GetSelectedContentItems(TArray<FAssetData>& SelectedAssets);
+
+	/**
 	 * Opens a dialog for the user to browse and select a directory on disk.
 	 *
 	 * @param DialogTitle Title to add to the dialog box to establish intent for the dialog box.
@@ -139,4 +147,12 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Settings")
 	static void SetBridgeWorkingDir(FString InLocation);
+
+
+	template <typename T>
+	static FString EnumToString(const FString& enumName, const T value)
+	{
+		UEnum* pEnum = FindObject<UEnum>(ANY_PACKAGE, *enumName);
+		return *(pEnum ? pEnum->GetNameStringByIndex(static_cast<uint8>(value)) : "null");
+	}
 };
