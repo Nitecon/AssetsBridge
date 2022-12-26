@@ -108,7 +108,7 @@ private:
 	void RegisterMenus();
 
 	/** This function finds all iems that the user currently has selected in content browser or in level editor */
-	TArray<AActor*> GetSelectedUserContext();
+	TArray<AActor*> GetSelectedUserContext() const;
 
 	/** This holds the settings widget once initialized */
 	class UUserWidget* CreatedWidget = nullptr;

@@ -130,7 +130,7 @@ TSharedRef<SDockTab> FAssetsBridgeModule::OnSpawnPluginTab(const FSpawnTabArgs& 
 	return NewDockTab;
 }
 
-TArray<AActor*> FAssetsBridgeModule::GetSelectedUserContext()
+TArray<AActor*> FAssetsBridgeModule::GetSelectedUserContext() const
 {
 	TArray<AActor*> Actors;
 	USelection* SelectedActors = GEditor->GetSelectedActors();
