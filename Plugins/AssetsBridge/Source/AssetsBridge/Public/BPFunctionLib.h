@@ -7,8 +7,52 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BPFunctionLib.generated.h"
 
-class UStruct;
 
+USTRUCT(BlueprintType, Category="JSON")
+struct FBridgeExportElement
+{
+	GENERATED_BODY()
+
+public:
+	/** Name of the actual file for use in export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	FString ShortName = "";
+
+	/** Where to find it in the content library. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	FString InternalPath = "";
+
+	/** Location of where to export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	FString ExportLocation = "";
+
+	/** Location of where to export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	FString ObjectType = "StaticMesh";
+
+	/* Todo: ADD Checksum at some point...*/
+	
+};
+
+USTRUCT(BlueprintType, Category="JSON")
+struct FBridgeExport
+{
+	GENERATED_BODY()
+
+public:
+	/** Name of the actual file for use in export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	FString Operation = "UnrealExport";
+
+	/** Where to find it in the content library. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	TArray<FBridgeExportElement> Objects;
+
+};
+
+
+
+class UStruct;
 /**
  * 
  */
@@ -18,6 +62,29 @@ class ASSETSBRIDGE_API UBPFunctionLib : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+
+	/**
+	 * Reads a JSON file into a FBridgeExportElement Structure and returns the content as a string.
+	 *
+	 * @param JsonFilePath Location for the file to be read on disk.
+	 * @param bOutSuccess Provides boolean whether operation succeeded.
+	 * @param OutMessage Provides more verbose information on the operation.
+	 *
+	 * @return Returns a list of Bridge Export Elements which are read from a file..
+	 */
+	UFUNCTION(BlueprintCallable, Category="JSON")
+	static FBridgeExport ReadBridgeExportFile(bool& bOutSuccess, FString& OutMessage);
+
+	/**
+		 * Writes a JSON file from a Array of FBridgeExportElement Structure.
+		 *
+		 * @param Data Contains the data that is to be converted over.
+		 * @param bOutSuccess Provides boolean whether operation succeeded.
+		 * @param OutMessage Provides more verbose information on the operation.
+		 */
+	UFUNCTION(BlueprintCallable, Category="JSON")
+	static void WriteBridgeExportFile(FBridgeExport Data, bool& bOutSuccess, FString& OutMessage);
+	
 	/**
 	 * Finds the currently selected folder within the content tree / content browser view.
 	 *

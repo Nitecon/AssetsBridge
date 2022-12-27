@@ -29,6 +29,10 @@ struct FExportAsset
 	/** Location of where to export. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString ExportLocation = "";
+
+	/** Location of where to export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString StringType = "StaticMesh";
 	
 };
 

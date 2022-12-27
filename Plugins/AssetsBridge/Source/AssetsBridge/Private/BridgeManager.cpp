@@ -118,10 +118,6 @@ void UBridgeManager::GenerateExport(TArray<AActor*> AssetList, bool& bIsSuccessf
 		auto MeshDataArray = GetMeshData(Actor, bIsSuccessful, OutMessage);
 		for (auto Item : MeshDataArray)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Exporting ShortName: %s"), *Item.ShortName);
-			UE_LOG(LogTemp, Warning, TEXT("Exporting Internal Path: %s"), *Item.InternalPath);
-			UE_LOG(LogTemp, Warning, TEXT("Exporting Relative Path: %s"), *Item.RelativeExportPath);
-			UE_LOG(LogTemp, Warning, TEXT("Exporting FULL Path: %s"), *Item.ExportLocation);
 			if (Item.Model->IsA(UStaticMesh::StaticClass()))
 			{
 				UStaticMesh* Mesh = Cast<UStaticMesh>(Item.Model);
@@ -132,41 +128,19 @@ void UBridgeManager::GenerateExport(TArray<AActor*> AssetList, bool& bIsSuccessf
 					Exporter->WriteToFile(*Item.ExportLocation);
 					Exporter->CloseDocument();
 				}
-				else
-				{
-					UE_LOG(LogTemp, Error, TEXT("Could not export model static mesh is a null ptr"))
-				}
-				
 			}
-			// Retrieve the information structures, verifying the integrity of the data.
-			/*UModel* Model = Actor->GetBrushComponent()->Brush;
-
-			if (Model == NULL || Model->VertexBuffer.Vertices.Num() < 3 || Model->MaterialIndexBuffers.Num() == 0) return;
-
-			// Create the FBX actor, the FBX geometry and instantiate it.
-			FbxNode* FbxActor = ExportActor(Actor, false, NodeNameAdapter);
-			Scene->GetRootNode()->AddChild(FbxActor);
-
-			// Export the mesh information
-			ExportModel(Model, FbxActor, TCHAR_TO_UTF8(*Actor->GetName()));*/
+			if (Item.Model->IsA(USkeletalMesh::StaticClass()))
+			{
+				USkeletalMesh* Mesh = Cast<USkeletalMesh>(Item.Model);
+				if (Mesh != nullptr)
+				{
+					Exporter->CreateDocument();
+					Exporter->ExportSkeletalMesh(Mesh);
+					Exporter->WriteToFile(*Item.ExportLocation);
+					Exporter->CloseDocument();
+				}
+			}
 		}
-		/*Exporter->CreateDocument();
-
-		if (Actor->IsA(AStaticMeshActor::StaticClass()))
-		{
-			Exporter->ExportStaticMesh(Actor, CastChecked<AStaticMeshActor>(Actor)->GetStaticMeshComponent(), NodeNameAdapter);
-		}
-		else if (Actor->IsA(ASkeletalMeshActor::StaticClass()))
-		{
-			Exporter->ExportSkeletalMesh(Actor, CastChecked<ASkeletalMeshActor>(Actor)->GetSkeletalMeshComponent(), NodeNameAdapter);
-		}
-		else if (Actor->IsA(ABrush::StaticClass()))
-		{
-			Exporter->ExportBrush(CastChecked<ABrush>(Actor), NULL, true, NodeNameAdapter);
-		}
-
-		Exporter->WriteToFile(*FileName);
-		*/
 	}
 	Exporter->DeleteInstance();
 

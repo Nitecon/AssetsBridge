@@ -13,6 +13,47 @@
 #include "Misc/FileHelper.h"
 #include "Serialization/JsonSerializer.h"
 
+FBridgeExport UBPFunctionLib::ReadBridgeExportFile(bool& bOutSuccess, FString& OutMessage)
+{
+	FString AssetBase;
+	GetAssetsLocation(AssetBase);
+	FString JsonFilePath = FPaths::Combine(AssetBase, "AssetBridge.json");
+	// Try to read generic text into json object
+	TSharedPtr<FJsonObject> JSONObject = ReadJson(JsonFilePath, bOutSuccess, OutMessage);
+	{
+		if (!bOutSuccess)
+		{
+			return FBridgeExport();
+		}
+	}
+	FBridgeExport ReturnData;
+	if (!FJsonObjectConverter::JsonObjectToUStruct<FBridgeExport>(JSONObject.ToSharedRef(), &ReturnData))
+	{
+		bOutSuccess = false;
+		OutMessage = FString::Printf(TEXT("Invalid json detected for this operation on file: %s"), *JsonFilePath);
+		return FBridgeExport();
+	}
+	bOutSuccess = true;
+	OutMessage = FString::Printf(TEXT("Operation Succeded"));
+	return ReturnData;
+}
+
+void UBPFunctionLib::WriteBridgeExportFile(FBridgeExport Data, bool& bOutSuccess, FString& OutMessage)
+{
+	TSharedPtr<FJsonObject> JsonObject = FJsonObjectConverter::UStructToJsonObject(Data);
+	if (JsonObject == nullptr)
+	{
+		bOutSuccess = false;
+		OutMessage = FString::Printf(TEXT("Invalid struct received, cannot convert to json"));
+		return;
+	}
+	FString AssetBase;
+	FString BridgeName = "AssetBridge.json";
+	GetAssetsLocation(AssetBase);
+	FString JsonFilePath = FPaths::Combine(AssetBase, BridgeName);
+	WriteJson(JsonFilePath, JsonObject, bOutSuccess, OutMessage);
+}
+
 void UBPFunctionLib::GetSelectedFolderPath(FString& OutContentLocation)
 {
 	TArray<FAssetData> OutSelectedAssets;
