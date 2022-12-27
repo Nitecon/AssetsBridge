@@ -66,7 +66,6 @@ public:
 	/**
 	 * Reads a JSON file into a FBridgeExportElement Structure and returns the content as a string.
 	 *
-	 * @param JsonFilePath Location for the file to be read on disk.
 	 * @param bOutSuccess Provides boolean whether operation succeeded.
 	 * @param OutMessage Provides more verbose information on the operation.
 	 *

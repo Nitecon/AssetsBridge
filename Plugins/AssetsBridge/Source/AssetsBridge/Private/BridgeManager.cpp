@@ -113,11 +113,14 @@ void UBridgeManager::GenerateExport(TArray<AActor*> AssetList, bool& bIsSuccessf
 	INodeNameAdapter NodeNameAdapter;
 	Exporter->FillExportOptions(false, false, UExporter::CurrentFilename, bIsCanceled, bExportAll);
 	Exporter->SetExportOptionsOverride(nullptr);
+	FBridgeExport ExportData;
+	ExportData.Operation = "UnrealExport";
 	for (auto Actor : AssetList)
 	{
 		auto MeshDataArray = GetMeshData(Actor, bIsSuccessful, OutMessage);
 		for (auto Item : MeshDataArray)
 		{
+			bool bDidExport = false;
 			if (Item.Model->IsA(UStaticMesh::StaticClass()))
 			{
 				UStaticMesh* Mesh = Cast<UStaticMesh>(Item.Model);
@@ -127,6 +130,7 @@ void UBridgeManager::GenerateExport(TArray<AActor*> AssetList, bool& bIsSuccessf
 					Exporter->ExportStaticMesh(Mesh);
 					Exporter->WriteToFile(*Item.ExportLocation);
 					Exporter->CloseDocument();
+					bDidExport = true;
 				}
 			}
 			if (Item.Model->IsA(USkeletalMesh::StaticClass()))
@@ -138,14 +142,22 @@ void UBridgeManager::GenerateExport(TArray<AActor*> AssetList, bool& bIsSuccessf
 					Exporter->ExportSkeletalMesh(Mesh);
 					Exporter->WriteToFile(*Item.ExportLocation);
 					Exporter->CloseDocument();
+					bDidExport = true;
 				}
+			}
+			if (bDidExport)
+			{
+				FBridgeExportElement ExItem;
+				ExItem.ExportLocation = *Item.ExportLocation;
+				ExItem.InternalPath = *Item.InternalPath;
+				ExItem.ObjectType = "StaticMesh";
+				ExItem.ShortName = *Item.ShortName;
+				ExportData.Objects.Add(ExItem);
 			}
 		}
 	}
 	Exporter->DeleteInstance();
-
-	bIsSuccessful = true;
-	OutMessage = "Operation Succeeded.";
+	UBPFunctionLib::WriteBridgeExportFile(ExportData, bIsSuccessful, OutMessage);
 }
 
 void UBridgeManager::GenerateImport(bool& bIsSuccessful, FString& OutMessage)
