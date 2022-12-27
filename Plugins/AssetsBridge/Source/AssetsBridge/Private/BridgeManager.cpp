@@ -93,7 +93,7 @@ TArray<FExportAsset> UBridgeManager::GetMeshData(AActor* Actor, bool& bIsSuccess
 			FExportAsset ItemData;
 			ItemData.InternalPath = ItemPath;
 			ItemData.Model = Cast<UObject>(Mesh->GetStaticMesh());
-			ItemData.ShortName = 
+			ItemData.ShortName = ShortName;
 			ItemData.RelativeExportPath = RelativeContentPath;
 			ItemData.ExportLocation = FPaths::Combine(AssetPath,RelativeContentPath, ShortName.Append(".fbx"));
 			Result.Add(ItemData);

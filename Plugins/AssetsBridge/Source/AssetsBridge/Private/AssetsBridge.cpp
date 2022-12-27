@@ -165,6 +165,13 @@ void FAssetsBridgeModule::SwapButtonClicked()
 
 void FAssetsBridgeModule::ExportButtonClicked()
 {
+	FString ContentLoc;
+	UBPFunctionLib::GetAssetsLocation(ContentLoc);
+	if (ContentLoc.Equals(""))
+	{
+		OpenSettingsMenu();
+		return;
+	}
 	auto assets = GetSelectedUserContext();
 	bool Success = false;
 	FString OutMessage;
@@ -178,6 +185,13 @@ void FAssetsBridgeModule::ExportButtonClicked()
 
 void FAssetsBridgeModule::ImportButtonClicked()
 {
+	FString ContentLoc;
+	UBPFunctionLib::GetAssetsLocation(ContentLoc);
+	if (ContentLoc.Equals(""))
+	{
+		OpenSettingsMenu();
+		return;
+	}
 	bool Success = false;
 	FString OutMessage;
 	UBridgeManager::GenerateImport(Success, OutMessage);
