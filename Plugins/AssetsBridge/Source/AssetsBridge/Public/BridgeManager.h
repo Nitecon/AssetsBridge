@@ -5,6 +5,33 @@
 #include "CoreMinimal.h"
 #include "BridgeManager.generated.h"
 
+USTRUCT(BlueprintType)
+struct FExportAsset
+{
+	GENERATED_BODY()
+
+	/** mesh pointer for it will be set here. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UObject* Model = nullptr;
+
+	/** Where to find it in the content library. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString InternalPath = "";
+
+	/** Name of the actual file for use in export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString RelativeExportPath = "";
+	
+	/** Name of the actual file for use in export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString ShortName = "";
+	
+	/** Location of where to export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString ExportLocation = "";
+	
+};
+
 /**
  * 
  */
@@ -28,6 +55,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Exports")
 	static void ExecuteSwap(TArray<AActor*> SelectList, TArray<FAssetData> ContentList, bool &bIsSuccessful, FString &OutMessage);
 
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
+	static TArray<FExportAsset> GetMeshData(AActor* Actor, bool& bIsSuccessful, FString& OutMessage);
+
 	/**
 	 * This function is responsible for creating the export bundle that will be saved and made available for external 3D application.
 	 * 
@@ -36,7 +66,7 @@ public:
 	 * @param OutMessage provides verbose information on the status of the operation.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Exports")
-	static void GenerateExport(TArray<FBridgeAssets> AssetList, bool &bIsSuccessful, FString &OutMessage);
+	static void GenerateExport(TArray<AActor*> AssetList, bool& bIsSuccessful, FString& OutMessage);
 
 	/**
 	 * This function is responsible for reading the manifest and importing the associated mesh in level or multiple meshes to asset library.

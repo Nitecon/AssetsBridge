@@ -168,12 +168,12 @@ void FAssetsBridgeModule::ExportButtonClicked()
 	auto assets = GetSelectedUserContext();
 	bool Success = false;
 	FString OutMessage;
-	/*UBridgeManager::GenerateExport(assets, Success, OutMessage);
+	UBridgeManager::GenerateExport(assets, Success, OutMessage);
 	if (!Success)
 	{
 		FText DialogText = FText::FromString(OutMessage);
 		FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-	}*/
+	}
 }
 
 void FAssetsBridgeModule::ImportButtonClicked()
