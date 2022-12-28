@@ -87,7 +87,8 @@ TArray<FExportAsset> UBridgeManager::GetMeshData(AActor* Actor, bool& bIsSuccess
 			FString ShortName;
 			FString Discard;
 			FPaths::Split(Mesh->GetStaticMesh().GetPath(),RelativeContentPath,ShortName,Discard);
-			FPaths::MakePathRelativeTo(RelativeContentPath, *ContentLocation);
+			//FPaths::MakePathRelativeTo(RelativeContentPath, *FPaths::ProjectContentDir());
+			RelativeContentPath = RelativeContentPath.Replace(TEXT("/Game"), TEXT(""));
 			IFileManager::Get().MakeDirectory(*FPaths::Combine(AssetPath,RelativeContentPath), true );
 			// If it starts with Engine or LevelPrototyping I need to ask the user for a new Path & Name as we can't replace engine items.
 			FExportAsset ItemData;

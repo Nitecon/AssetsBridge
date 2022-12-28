@@ -91,3 +91,4 @@ cmake-build-debug/
 CMakeLists.txt
 Content/M4_Animations/
 Content/GunSoundPack/
+.vsconfig
