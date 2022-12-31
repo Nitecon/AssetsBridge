@@ -64,6 +64,16 @@ class ASSETSBRIDGE_API UBPFunctionLib : public UBlueprintFunctionLibrary
 public:
 
 	/**
+	 * Reads transforms the selected content and ensures a proper path is selected for it.
+	 *
+	 * @param AssetList Use the provided asset list to ensure non engine content.
+	 * @param bIsSuccessful Provides boolean whether operation succeeded.
+	 * @param OutMessage Provides more verbose information on the operation.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
+	static void ExecuteExport(TArray<AActor*> AssetList, bool& bIsSuccessful, FString& OutMessage);
+
+	/**
 	 * Reads a JSON file into a FBridgeExportElement Structure and returns the content as a string.
 	 *
 	 * @param bOutSuccess Provides boolean whether operation succeeded.
@@ -175,6 +185,12 @@ public:
 	static void GetContentLocation(FString& OutContentLocation);
 
 	/**
+	 * Returns the user selected list of items to be exported or interacted with, returns only items that are static meshes or skeletal meshes.
+	 */
+	UFUNCTION(BlueprintCallable, Category="AssetsBridge Utilities")
+	static void GetSelectedContent(TArray<AActor*> OutActors);
+
+	/**
 	* Sets the Assets Bridge config option for the related setting.
 	*
 	* @param InLocation Sets the provided string to the value of the content location.
@@ -213,6 +229,8 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Settings")
 	static void SetBridgeWorkingDir(FString InLocation);
+
+	
 
 
 	template <typename T>

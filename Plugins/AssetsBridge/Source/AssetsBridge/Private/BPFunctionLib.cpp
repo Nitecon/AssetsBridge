@@ -4,14 +4,25 @@
 #include "BPFunctionLib.h"
 
 #include "ABSettings.h"
-#include "AssetsBridge.h"
+#include "BridgeManager.h"
 #include "ContentBrowserModule.h"
 #include "EditorDirectories.h"
 #include "IContentBrowserSingleton.h"
+#include "Selection.h"
 #include "Developer/DesktopPlatform/Public/IDesktopPlatform.h"
 #include "Developer/DesktopPlatform/Public/DesktopPlatformModule.h"
 #include "Misc/FileHelper.h"
 #include "Serialization/JsonSerializer.h"
+
+void UBPFunctionLib::ExecuteExport(TArray<AActor*> AssetList, bool& bIsSuccessful, FString& OutMessage)
+{
+	UBridgeManager::GenerateExport(AssetList, bIsSuccessful, OutMessage);
+	if (!bIsSuccessful)
+	{
+		FText DialogText = FText::FromString(OutMessage);
+		FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+	}
+}
 
 FBridgeExport UBPFunctionLib::ReadBridgeExportFile(bool& bOutSuccess, FString& OutMessage)
 {
@@ -218,6 +229,22 @@ void UBPFunctionLib::GetContentLocation(FString& OutContentLocation)
 	if (Settings != nullptr)
 	{
 		OutContentLocation = Settings->UnrealContentLocation;
+	}
+}
+
+void UBPFunctionLib::GetSelectedContent(TArray<AActor*> OutActors)
+{
+	// TODO: Add filter for static /skeletal meshes only.
+	USelection* SelectedActors = GEditor->GetSelectedActors();
+	for (FSelectionIterator Iter(*SelectedActors); Iter; ++Iter)
+	{
+		AActor* Actor = Cast<AActor>(*Iter);
+		TArray<UStaticMeshComponent*> Components;
+		Actor->GetComponents(Components);
+		if (Components.Num() > 0)
+		{
+			OutActors.Add(Actor);
+		}
 	}
 }
 

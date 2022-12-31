@@ -100,23 +100,41 @@ public:
 	void ExportButtonClicked();
 	/** This function will be bound to Command it will initiate the Import Operation */
 	void ImportButtonClicked();
+	/** This function will open the plugin tab and initialize the content with the export handler GUI */
+	void OpenExportGUI();
 	/** This function will be bound to Command it will initialize the settings menu */
 	void OpenSettingsMenu();
 
+	/**
+	 * @brief Provides a means to retrieve the current selection that the user has made.
+	 */
+	UPROPERTY(BlueprintReadWrite, Category="AssetsBridge Data")
+	TArray<AActor*> CurrentSelection;
+
+	UFUNCTION(BlueprintCallable, Category="AssetsBridge Data")
+	FORCEINLINE TArray<AActor*> GetCurrentSelection() const {return CurrentSelection;}
+
+
+	/** This function finds all iems that the user currently has selected in content browser or in level editor */
+	TArray<AActor*> GetSelectedUserContext() ;
+	
 private:
 	/** This function is needed to register menus */
 	void RegisterMenus();
 
-	/** This function finds all iems that the user currently has selected in content browser or in level editor */
-	TArray<AActor*> GetSelectedUserContext() const;
-
-	/** This holds the settings widget once initialized */
-	class UUserWidget* CreatedWidget = nullptr;
+	
 
 	/** Starts the settings plugins tab for the user to interact with settings. */
 	TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
 
-private:
+	/** Starts the settings plugins tab for the user to interact with settings. */
+	TSharedRef<class SDockTab> OnSpawnPluginExportTab(const class FSpawnTabArgs& SpawnTabArgs);
+
+	/** Setup the GUI tabs required for the user to interact with Assets Bridge */
+	FString AssetsBridgeContentTab = TEXT("/AssetsBridge/BPW_Settings.BPW_Settings_C");
+
+	/** Setup the GUI tabs required for the user to interact with Assets Bridge */
+	FString AssetsBridgeExportTab = TEXT("/AssetsBridge/BPW_ExportHandler.BPW_ExportHandler_C");
 	/** The list of commands provided by this Plugin. */
 	TSharedPtr<class FUICommandList> PluginCommands;
 };

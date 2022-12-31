@@ -3,17 +3,18 @@
 
 #include "BridgeManager.h"
 
-#include "ABSettings.h"
+#include "AssetImportTask.h"
 #include "UnrealEd/Private/FbxExporter.h"
-#include "AssetsBridge.h"
 #include "BPFunctionLib.h"
+#include "ContentBrowserModule.h"
+#include "IContentBrowserSingleton.h"
 #include "ActorFactories/ActorFactory.h"
 #include "ActorFactories/ActorFactoryBlueprint.h"
-#include "Animation/SkeletalMeshActor.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/StaticMesh.h"
 #include "Components/StaticMeshComponent.h"
-#include "Engine/StaticMeshActor.h"
 #include "Exporters/Exporter.h"
+#include "Factories/FbxFactory.h"
 
 UBridgeManager::UBridgeManager()
 {
@@ -86,17 +87,17 @@ TArray<FExportAsset> UBridgeManager::GetMeshData(AActor* Actor, bool& bIsSuccess
 			FString RelativeContentPath;
 			FString ShortName;
 			FString Discard;
-			FPaths::Split(Mesh->GetStaticMesh().GetPath(),RelativeContentPath,ShortName,Discard);
+			FPaths::Split(Mesh->GetStaticMesh().GetPath(), RelativeContentPath, ShortName, Discard);
 			//FPaths::MakePathRelativeTo(RelativeContentPath, *FPaths::ProjectContentDir());
 			RelativeContentPath = RelativeContentPath.Replace(TEXT("/Game"), TEXT(""));
-			IFileManager::Get().MakeDirectory(*FPaths::Combine(AssetPath,RelativeContentPath), true );
+			IFileManager::Get().MakeDirectory(*FPaths::Combine(AssetPath, RelativeContentPath), true);
 			// If it starts with Engine or LevelPrototyping I need to ask the user for a new Path & Name as we can't replace engine items.
 			FExportAsset ItemData;
 			ItemData.InternalPath = ItemPath;
 			ItemData.Model = Cast<UObject>(Mesh->GetStaticMesh());
 			ItemData.ShortName = ShortName;
 			ItemData.RelativeExportPath = RelativeContentPath;
-			ItemData.ExportLocation = FPaths::Combine(AssetPath,RelativeContentPath, ShortName.Append(".fbx"));
+			ItemData.ExportLocation = FPaths::Combine(AssetPath, RelativeContentPath, ShortName.Append(".fbx"));
 			Result.Add(ItemData);
 		}
 	}
@@ -164,6 +165,87 @@ void UBridgeManager::GenerateExport(TArray<AActor*> AssetList, bool& bIsSuccessf
 void UBridgeManager::GenerateImport(bool& bIsSuccessful, FString& OutMessage)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Starting import"))
+	FBridgeExport BridgeData = UBPFunctionLib::ReadBridgeExportFile(bIsSuccessful, OutMessage);
+	if (!bIsSuccessful)
+	{
+		return;
+	}
+	if (BridgeData.Operation.Equals("UnrealExport"))
+	{
+		bIsSuccessful = false;
+		OutMessage = FString::Printf(TEXT("nothing new to import... still an export configuration."));
+		return;
+	}
+	UnFbx::FFbxImporter* Importer = UnFbx::FFbxImporter::GetInstance();
+
+	for (auto Item : BridgeData.Objects)
+	{
+		TArray<UObject*> ReturnObjects;
+		if (Item.ObjectType.Equals("StaticMesh"))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Creating Package: %s"), *Item.InternalPath)
+			UPackage* Package = CreatePackage(*Item.InternalPath);
+			if (!ensure(Package))
+			{
+				// Failed to create the package to hold this asset for some reason
+				continue;
+			}
+
+			UFbxFactory* Factory = NewObject<UFbxFactory>(UFbxFactory::StaticClass(), FName("Factory"), RF_NoFlags);
+			Factory->ResetState();
+			if (Factory == nullptr)
+			{
+				bIsSuccessful = false;
+				OutMessage = FString::Printf(TEXT("cannot instantiate import factory."));
+				return;
+			}
+			bool bImportWasCancelled = false;
+			UClass* ImportAssetType = Factory->ResolveSupportedClass();
+			UObject* Result;
+			UAssetImportTask* ImportTask = NewObject<UAssetImportTask>(UAssetImportTask::StaticClass());
+			ImportTask->bAutomated = true;
+			ImportTask->bReplaceExisting = true;
+			ImportTask->Options = Factory->ImportUI;
+			Factory->SetAssetImportTask(ImportTask);
+			Result = Factory->ImportObject(ImportAssetType, Package, FName(*Item.ShortName), RF_Public | RF_Standalone | RF_Transactional, Item.ExportLocation, nullptr, bImportWasCancelled);
+			// Do not report any error if the operation was canceled.
+			if (!bImportWasCancelled)
+			{
+				if (Result)
+				{
+					ReturnObjects.Add(Result);
+
+					// Notify the asset registry
+					FAssetRegistryModule::AssetCreated(Result);
+					GEditor->BroadcastObjectReimported(Result);
+					bIsSuccessful = true;
+				}
+				else
+				{
+					FString Msg = FString::Printf(TEXT("Failed to import '%s'. Failed to create asset '%s'.\nPlease see Output Log for details."), *Item.ExportLocation, *Item.ShortName);
+					const FText Message = FText::FromString(Msg);
+					if (!Factory->IsAutomatedImport())
+					{
+						FMessageDialog::Open(EAppMsgType::Ok, Message);
+					}
+					UE_LOG(LogTemp, Warning, TEXT("%s"), *Message.ToString());
+				}
+			}
+			if (ReturnObjects.Num())
+			{
+				FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+				ContentBrowserModule.Get().SyncBrowserToAssets(ReturnObjects, /*bAllowLockedBrowsers=*/true);
+			}
+		}
+	}
+	/*TArray<FAssetData> SelectedAssets;
+	UBPFunctionLib::GetSelectedContentItems(SelectedAssets);
+	TArray<FAssetData> ContentList;
+	FAssetData NewAsset;
+	NewAsset.
+	ContentList.Add(FAssetData{})
+	ExecuteSwap(SelectedAssets)*/
+
 	bIsSuccessful = true;
-	OutMessage = "Operation Succeeded.";
+	OutMessage = FString::Printf(TEXT("Operation was successful"));
 }
