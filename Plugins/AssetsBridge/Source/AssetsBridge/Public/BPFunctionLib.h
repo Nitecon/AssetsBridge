@@ -8,6 +8,26 @@
 #include "BPFunctionLib.generated.h"
 
 
+USTRUCT(BlueprintType)
+struct FMaterialSlot
+{
+	GENERATED_BODY()
+
+	/** Name of the material / slot name. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Name = "";
+
+	/** Material index */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Idx = 0;
+	
+	/** Where to find it in the content library. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString InternalPath = "";
+
+	
+};
+
 USTRUCT(BlueprintType, Category="JSON")
 struct FBridgeExportElement
 {
@@ -29,6 +49,10 @@ public:
 	/** Location of where to export. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
 	FString ObjectType = "StaticMesh";
+
+	/** Material information for the object. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	TArray<FMaterialSlot> ObjectMaterials;
 
 	/* Todo: ADD Checksum at some point...*/
 	
@@ -71,7 +95,20 @@ public:
 	 * @param OutMessage Provides more verbose information on the operation.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
-	static void ExecuteExport(TArray<AActor*> AssetList, bool& bIsSuccessful, FString& OutMessage);
+	static void StartExport(TArray<FExportAsset> ChangedList, TArray<FExportAsset> ReadyList,  bool& bIsSuccessful, FString& OutMessage);
+
+	/**
+	 * Combines name and new internal path and stitches it onto the user provided export base.
+	 *
+	 * @param NewInternalPath The new location where the asset will be residing.
+	 * @param NewName The new name for the asset as provided by the user.
+	 * @return Returns the full export path.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
+	static FString GetExportPathFromInternal(FString NewInternalPath, FString NewName);
+
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
+	static void CloseExportTab();
 
 	/**
 	 * Reads a JSON file into a FBridgeExportElement Structure and returns the content as a string.
@@ -185,10 +222,17 @@ public:
 	static void GetContentLocation(FString& OutContentLocation);
 
 	/**
+	* Gets the Assets Bridge location related to this setting.
+	*
+	* @return provides the location for this setting .
+	*/
+	static FString GetContentLocation();
+
+	/**
 	 * Returns the user selected list of items to be exported or interacted with, returns only items that are static meshes or skeletal meshes.
 	 */
 	UFUNCTION(BlueprintCallable, Category="AssetsBridge Utilities")
-	static void GetSelectedContent(TArray<AActor*> OutActors);
+	static TArray<AActor*> GetWorldSelection();
 
 	/**
 	* Sets the Assets Bridge config option for the related setting.
@@ -231,7 +275,8 @@ public:
 	static void SetBridgeWorkingDir(FString InLocation);
 
 	
-
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
+	static TArray<FExportAsset> GetMeshData(AActor* Actor, bool& bIsSuccessful, FString& OutMessage);
 
 	template <typename T>
 	static FString EnumToString(const FString& enumName, const T value)

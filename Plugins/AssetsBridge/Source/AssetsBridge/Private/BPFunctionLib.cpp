@@ -14,14 +14,40 @@
 #include "Misc/FileHelper.h"
 #include "Serialization/JsonSerializer.h"
 
-void UBPFunctionLib::ExecuteExport(TArray<AActor*> AssetList, bool& bIsSuccessful, FString& OutMessage)
+void UBPFunctionLib::StartExport(TArray<FExportAsset> ChangedList, TArray<FExportAsset> ReadyList, bool& bIsSuccessful, FString& OutMessage)
 {
+	TArray<FExportAsset> AssetList;
+	for (auto Item : ChangedList)
+	{
+		AssetList.Add(Item);
+	}
+	for (auto Item : ReadyList)
+	{
+		AssetList.Add(Item);
+	}
+	
 	UBridgeManager::GenerateExport(AssetList, bIsSuccessful, OutMessage);
 	if (!bIsSuccessful)
 	{
 		FText DialogText = FText::FromString(OutMessage);
 		FMessageDialog::Open(EAppMsgType::Ok, DialogText);
 	}
+}
+
+FString UBPFunctionLib::GetExportPathFromInternal(FString NewInternalPath, FString NewName)
+{
+	FString AssetHome;
+	GetAssetsLocation(AssetHome);
+	//TODO: Strip Engine / Game / Other folders from the start.
+	FString NewExportPath = FPaths::Combine(AssetHome, NewInternalPath, NewName.Append(".fbx"));
+	UE_LOG(LogTemp, Warning, TEXT("Adding new export path: %s"), *NewExportPath)
+	return NewExportPath;
+}
+
+void UBPFunctionLib::CloseExportTab()
+{
+	static const FName AssetsBridgeExpConfig("Assets Bridge Export Configuration");
+
 }
 
 FBridgeExport UBPFunctionLib::ReadBridgeExportFile(bool& bOutSuccess, FString& OutMessage)
@@ -58,8 +84,8 @@ void UBPFunctionLib::WriteBridgeExportFile(FBridgeExport Data, bool& bOutSuccess
 		OutMessage = FString::Printf(TEXT("Invalid struct received, cannot convert to json"));
 		return;
 	}
-	FString AssetBase;
 	FString BridgeName = "AssetBridge.json";
+	FString AssetBase;
 	GetAssetsLocation(AssetBase);
 	FString JsonFilePath = FPaths::Combine(AssetBase, BridgeName);
 	WriteJson(JsonFilePath, JsonObject, bOutSuccess, OutMessage);
@@ -232,8 +258,19 @@ void UBPFunctionLib::GetContentLocation(FString& OutContentLocation)
 	}
 }
 
-void UBPFunctionLib::GetSelectedContent(TArray<AActor*> OutActors)
+FString UBPFunctionLib::GetContentLocation()
 {
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
+	if (Settings != nullptr)
+	{
+		return Settings->UnrealContentLocation;
+	}
+	return FString();
+}
+
+TArray<AActor*> UBPFunctionLib::GetWorldSelection()
+{
+	TArray<AActor*> OutActors;
 	// TODO: Add filter for static /skeletal meshes only.
 	USelection* SelectedActors = GEditor->GetSelectedActors();
 	for (FSelectionIterator Iter(*SelectedActors); Iter; ++Iter)
@@ -246,6 +283,7 @@ void UBPFunctionLib::GetSelectedContent(TArray<AActor*> OutActors)
 			OutActors.Add(Actor);
 		}
 	}
+	return OutActors;
 }
 
 void UBPFunctionLib::SetContentLocation(FString InLocation)
@@ -294,4 +332,57 @@ void UBPFunctionLib::SetBridgeWorkingDir(FString InLocation)
 		Settings->AssetBridgeWorkingDir = InLocation;
 		Settings->SaveConfig();
 	}
+}
+
+TArray<FExportAsset> UBPFunctionLib::GetMeshData(AActor* Actor, bool& bIsSuccessful, FString& OutMessage)
+{
+	TArray<FExportAsset> Result;
+	TArray<UStaticMeshComponent*> Components;
+	Actor->GetComponents<UStaticMeshComponent>(Components);
+	for (const auto Mesh : Components)
+	{
+		if (Mesh->GetStaticMesh() != nullptr)
+		{
+			FString ContentLocation;
+			GetContentLocation(ContentLocation);
+			FString ItemPath = Mesh->GetStaticMesh().GetPath();
+			FString AssetPath;
+			GetAssetsLocation(AssetPath);
+			FString RelativeContentPath;
+			FString ShortName;
+			FString Discard;
+			FPaths::Split(Mesh->GetStaticMesh().GetPath(), RelativeContentPath, ShortName, Discard);
+			//FPaths::MakePathRelativeTo(RelativeContentPath, *FPaths::ProjectContentDir());
+			RelativeContentPath = RelativeContentPath.Replace(TEXT("/Game"), TEXT(""));
+			IFileManager::Get().MakeDirectory(*FPaths::Combine(AssetPath, RelativeContentPath), true);
+			// If it starts with Engine or LevelPrototyping I need to ask the user for a new Path & Name as we can't replace engine items.
+			FExportAsset ItemData;
+			ItemData.InternalPath = ItemPath;
+			ItemData.Model = Cast<UObject>(Mesh->GetStaticMesh());
+			if (Mesh->GetStaticMesh() != nullptr)
+			{
+				TArray<FStaticMaterial> Materials = Mesh->GetStaticMesh()->GetStaticMaterials();
+				for (auto Mat : Materials)
+				{
+					FExportMaterial NewMat;
+					NewMat.Name = Mat.MaterialSlotName.ToString();
+					NewMat.InternalPath = Mat.MaterialInterface.GetPath();
+					NewMat.Idx = Mesh->GetStaticMesh()->GetMaterialIndex(FName(NewMat.Name));
+					ItemData.Materials.Add(NewMat);
+					UE_LOG(LogTemp, Warning, TEXT("Adding material: %s"), *NewMat.Name)
+				}
+			}
+			ItemData.ShortName = ShortName;
+			ItemData.RelativeExportPath = RelativeContentPath;
+			FString FileName = ShortName.Append(".fbx");
+			FString ExportLoc = FPaths::Combine(AssetPath, RelativeContentPath, FileName);
+			//UE_LOG(LogTemp, Warning, TEXT("Adding file for export: %s"), *ExportLoc)
+			ItemData.ExportLocation = ExportLoc;
+			Result.Add(ItemData);
+		}
+	}
+
+	bIsSuccessful = true;
+	OutMessage = "Operation Succeeded.";
+	return Result;
 }
