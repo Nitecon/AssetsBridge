@@ -17,7 +17,6 @@
 
 
 static const FName AssetsBridgeTabName("Assets Bridge Configuration");
-static const FName AssetsBridgeExpConfig("Assets Bridge Export Configuration");
 
 #define LOCTEXT_NAMESPACE "FAssetsBridgeModule"
 
@@ -35,11 +34,6 @@ void FAssetsBridgeModule::StartupModule()
 	PluginCommands->MapAction(
 		FAssetsBridgeCommands::Get().OpenSettingsWindow,
 		FExecuteAction::CreateRaw(this, &FAssetsBridgeModule::OpenSettingsMenu),
-		FCanExecuteAction());
-
-	PluginCommands->MapAction(
-		FAssetsBridgeCommands::Get().OpenSettingsWindow,
-		FExecuteAction::CreateRaw(this, &FAssetsBridgeModule::OpenExportGUI),
 		FCanExecuteAction());
 
 	PluginCommands->MapAction(
@@ -63,10 +57,6 @@ void FAssetsBridgeModule::StartupModule()
 	                        .SetDisplayName(LOCTEXT("FAssetsBridgeTabTitle", "AssetsBridge"))
 	                        .SetMenuType(ETabSpawnerMenuType::Hidden);
 	
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(AssetsBridgeExpConfig, FOnSpawnTab::CreateRaw(this, &FAssetsBridgeModule::OnSpawnPluginExportTab))
-	                        .SetDisplayName(LOCTEXT("FAssetsBridgeTabTitle", "AssetsBridge"))
-	                        .SetMenuType(ETabSpawnerMenuType::Hidden);
-
 
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
@@ -95,7 +85,6 @@ void FAssetsBridgeModule::ShutdownModule()
 	FAssetsBridgeCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AssetsBridgeTabName);
-	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AssetsBridgeExpConfig);
 }
 
 TSharedRef<SDockTab> FAssetsBridgeModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
@@ -122,46 +111,6 @@ TSharedRef<SDockTab> FAssetsBridgeModule::OnSpawnPluginTab(const FSpawnTabArgs& 
 		];
 	//This path is contained within the WrapperHelperTemplate Content folder
 	UClass* LoadedWidget = LoadObject<UClass>(NULL, *AssetsBridgeContentTab, NULL, LOAD_None, NULL);
-	if (LoadedWidget)
-	{
-		//If successfully loaded, store it for later use.
-		UUserWidget* CreatedWidget = CreateWidget(GEditor->GetEditorWorldContext().World(), LoadedWidget);
-		if (CreatedWidget)
-		{
-			//Store our widget
-			TSharedRef<SWidget> UserSlateWidget = CreatedWidget->TakeWidget();
-			//Assign our widget to our tab's content
-			NewDockTab->SetContent(UserSlateWidget);
-		}
-	}
-	//Return our tab
-	return NewDockTab;
-}
-
-TSharedRef<SDockTab> FAssetsBridgeModule::OnSpawnPluginExportTab(const FSpawnTabArgs& SpawnTabArgs)
-{
-	// Set up some failure text first in case our widget doesn't load properly...
-	FText WidgetText = FText::Format(
-		LOCTEXT("WindowWidgetText", "Failed to load content widget, fix this under {0} in {1}"),
-		FText::FromString(TEXT("FWrapperHelperTempateModule::OnSpawnPluginExportTab")),
-		FText::FromString(TEXT("WrapperHelperTempate.cpp"))
-	);
-
-	//Declare our DockTab and assign it to the template
-	TSharedRef<SDockTab> NewDockTab = SNew(SDockTab)
-		.TabRole(ETabRole::NomadTab)
-		[
-			// Put your tab content here!
-			SNew(SBox)
-			.HAlign(HAlign_Center)
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(WidgetText)
-			]
-		];
-	//This path is contained within the WrapperHelperTemplate Content folder
-	UClass* LoadedWidget = LoadObject<UClass>(NULL, *AssetsBridgeExportTab, NULL, LOAD_None, NULL);
 	if (LoadedWidget)
 	{
 		//If successfully loaded, store it for later use.
@@ -253,11 +202,6 @@ void FAssetsBridgeModule::ImportButtonClicked()
 	}
 }
 
-void FAssetsBridgeModule::OpenExportGUI()
-{
-	// If content settings are not set show the tab else run the command
-	FGlobalTabmanager::Get()->TryInvokeTab(AssetsBridgeExpConfig);
-}
 
 void FAssetsBridgeModule::OpenSettingsMenu()
 {
