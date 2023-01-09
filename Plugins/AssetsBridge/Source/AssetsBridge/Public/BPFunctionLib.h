@@ -107,9 +107,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
 	static FString GetExportPathFromInternal(FString NewInternalPath, FString NewName);
 
-	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
-	static void CloseExportTab();
-
 	/**
 	 * Reads a JSON file into a FBridgeExportElement Structure and returns the content as a string.
 	 *

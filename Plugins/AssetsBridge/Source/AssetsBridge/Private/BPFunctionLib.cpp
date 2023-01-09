@@ -44,12 +44,6 @@ FString UBPFunctionLib::GetExportPathFromInternal(FString NewInternalPath, FStri
 	return NewExportPath;
 }
 
-void UBPFunctionLib::CloseExportTab()
-{
-	static const FName AssetsBridgeExpConfig("Assets Bridge Export Configuration");
-
-}
-
 FBridgeExport UBPFunctionLib::ReadBridgeExportFile(bool& bOutSuccess, FString& OutMessage)
 {
 	FString AssetBase;
