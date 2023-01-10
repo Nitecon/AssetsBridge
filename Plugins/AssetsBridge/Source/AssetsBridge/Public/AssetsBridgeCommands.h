@@ -21,6 +21,7 @@ public:
 public:
 	TSharedPtr< FUICommandInfo > OpenSettingsWindow;
 	TSharedPtr< FUICommandInfo > ContentSwapAction;
+	TSharedPtr< FUICommandInfo > MakeAssetAction;
 	TSharedPtr< FUICommandInfo > ContentExportAction;
 	TSharedPtr< FUICommandInfo > ContentImportAction;
 };

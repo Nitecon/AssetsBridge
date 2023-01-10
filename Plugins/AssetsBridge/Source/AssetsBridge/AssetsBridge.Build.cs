@@ -50,7 +50,7 @@ public class AssetsBridge : ModuleRules
 				"JsonUtilities",
 				"UMG",
 				"UMGEditor", 
-				"EditorScriptingUtilities"
+				"EditorScriptingUtilities",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

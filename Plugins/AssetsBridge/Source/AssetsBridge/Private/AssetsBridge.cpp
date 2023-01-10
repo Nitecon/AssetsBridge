@@ -5,8 +5,9 @@
 #include "ABSettings.h"
 #include "AssetsBridgeStyle.h"
 #include "AssetsBridgeCommands.h"
-#include "BPFunctionLib.h"
+#include "AssetsBridgeTools.h"
 #include "BridgeManager.h"
+#include "EditorAssetLibrary.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
@@ -14,6 +15,7 @@
 #include "ISettingsModule.h"
 #include "Selection.h"
 #include "Blueprint/UserWidget.h"
+#include "Logging/LogMacros.h"
 
 
 static const FName AssetsBridgeTabName("Assets Bridge Configuration");
@@ -39,6 +41,11 @@ void FAssetsBridgeModule::StartupModule()
 	PluginCommands->MapAction(
 		FAssetsBridgeCommands::Get().ContentSwapAction,
 		FExecuteAction::CreateRaw(this, &FAssetsBridgeModule::SwapButtonClicked),
+		FCanExecuteAction());
+
+	PluginCommands->MapAction(
+		FAssetsBridgeCommands::Get().MakeAssetAction,
+		FExecuteAction::CreateRaw(this, &FAssetsBridgeModule::MakeAssetButtonClicked),
 		FCanExecuteAction());
 
 	PluginCommands->MapAction(
@@ -146,11 +153,58 @@ TArray<AActor*> FAssetsBridgeModule::GetSelectedUserContext()
 	return Actors;
 }
 
+void FAssetsBridgeModule::MakeAssetButtonClicked()
+{
+	// Start duplication and swap, then add to array.
+	bool bIsSuccessful = true;
+	FString OutMessage = "Asset snatched successfully";
+	TArray<FAssetData> Assets;
+	UAssetsBridgeTools::GetSelectedContentBrowserItems(Assets);
+	if (Assets.Num() < 1)
+	{
+		UAssetsBridgeTools::ShowInfoDialog("Nothing selected in content browser: use Ctrl + B(Browse to asset) to select current item in the world.");
+		return;
+	}
+	for (FAssetData Asset : Assets)
+	{
+		if (Asset != nullptr)
+		{
+			if (FPaths::IsUnderDirectory(Asset.GetSoftObjectPath().ToString(), UAssetsBridgeTools::GetContentBrowserRoot()))
+			{
+				UAssetsBridgeTools::ShowInfoDialog("This item is already a part of the assets root");
+			}else
+			{
+				FString SourcePackagePath = UAssetsBridgeTools::GetPathWithoutExt(Asset.GetSoftObjectPath().ToString());
+				FString TargetPath = UAssetsBridgeTools::GetSystemPathAsAssetPath(SourcePackagePath);
+				UObject* DuplicateObject = UEditorAssetLibrary::DuplicateAsset(SourcePackagePath, TargetPath);
+				if (DuplicateObject == nullptr)
+				{
+					bIsSuccessful = false;
+					OutMessage = FString::Printf(TEXT("Cannot duplicate: %s to %s, does it already exist?"), *SourcePackagePath, *TargetPath);
+				}else
+				{
+					TArray<UObject*> SyncObjects;
+					SyncObjects.Add(DuplicateObject);
+					GEditor->SyncBrowserToObjects(SyncObjects);
+					UAssetsBridgeTools::ShowNotification("Asset snatched...");
+				}
+			}
+		}else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Invalid asset detected"))
+		}
+	}
+	if (!bIsSuccessful)
+	{
+		UAssetsBridgeTools::ShowNotification(OutMessage);
+	}	
+}
+
 void FAssetsBridgeModule::SwapButtonClicked()
 {
 	TArray<FAssetData> CurSelection;
 	auto SelectedAssets = GetSelectedUserContext();
-	UBPFunctionLib::GetSelectedContentItems(CurSelection);
+	UAssetsBridgeTools::GetSelectedContentBrowserItems(CurSelection);
 	bool Success = false;
 	FString OutMessage;
 	UBridgeManager::ExecuteSwap(SelectedAssets, CurSelection, Success, OutMessage);
@@ -158,13 +212,16 @@ void FAssetsBridgeModule::SwapButtonClicked()
 	{
 		FText DialogText = FText::FromString(OutMessage);
 		FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+	}else
+	{
+		UAssetsBridgeTools::ShowNotification("Object swapped...");
 	}
 }
 
 void FAssetsBridgeModule::ExportButtonClicked()
 {
 	FString ContentLoc;
-	UBPFunctionLib::GetAssetsLocation(ContentLoc);
+	UAssetsBridgeTools::GetExportRoot(ContentLoc);
 	if (ContentLoc.Equals(""))
 	{
 		OpenSettingsMenu();
@@ -186,7 +243,7 @@ void FAssetsBridgeModule::ExportButtonClicked()
 void FAssetsBridgeModule::ImportButtonClicked()
 {
 	FString ContentLoc;
-	UBPFunctionLib::GetAssetsLocation(ContentLoc);
+	UAssetsBridgeTools::GetExportRoot(ContentLoc);
 	if (ContentLoc.Equals(""))
 	{
 		OpenSettingsMenu();
@@ -238,12 +295,14 @@ void FAssetsBridgeModule::RegisterMenus()
 		{
 			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("PluginTools");
 			{
+				FToolMenuEntry& ImportEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentImportAction));
+				ImportEntry.SetCommandList(PluginCommands);
+				FToolMenuEntry& MakeEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().MakeAssetAction));
+				MakeEntry.SetCommandList(PluginCommands);
 				FToolMenuEntry& SwapEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentSwapAction));
 				SwapEntry.SetCommandList(PluginCommands);
 				FToolMenuEntry& ExportEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentExportAction));
 				ExportEntry.SetCommandList(PluginCommands);
-				FToolMenuEntry& ImportEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentImportAction));
-				ImportEntry.SetCommandList(PluginCommands);
 			}
 		}
 	}

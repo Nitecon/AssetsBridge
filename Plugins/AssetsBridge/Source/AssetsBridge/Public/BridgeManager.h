@@ -91,17 +91,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Tools")
 	static bool IsSystemPath(FString Path);
 
-	/**
-	 * Utility function to remove the extension from a path's filename
-	 */
-	static FString GetPathWithoutExt(FString InPath);
-
-	/**
-	 * This functions is responsible for stripping engine specific paths so they can be prepended by the asset directory..
-	 * @param Path This is the path that is to be evaluated whether it is within system directories.
-	 * @return the path in relative ot the asset content path.
-	 */
-	static FString GetSystemPathAsAssetPath(FString Path);
+	
 
 	/**
 	 * This function is responsible for duplicating the engine selected items and swapping them in the level with the new items.

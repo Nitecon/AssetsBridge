@@ -96,6 +96,8 @@ public:
 
 	/** This function will be bound to Command it will initiate the Swap Operation */
 	void SwapButtonClicked();
+	/** This function will be bound to Command it will initiate the Make Asset Operation */
+	void MakeAssetButtonClicked();
 	/** This function will be bound to Command it will initiate the Export Operation */
 	void ExportButtonClicked();
 	/** This function will be bound to Command it will initiate the Import Operation */
@@ -116,6 +118,7 @@ public:
 	/** This function finds all iems that the user currently has selected in content browser or in level editor */
 	TArray<AActor*> GetSelectedUserContext() ;
 	
+
 private:
 	/** This function is needed to register menus */
 	void RegisterMenus();

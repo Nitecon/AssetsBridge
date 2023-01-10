@@ -4,14 +4,13 @@
 #include "BridgeManager.h"
 
 #include "AssetImportTask.h"
-#include "BPFunctionLib.h"
+#include "AssetsBridgeTools.h"
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
 #include "ActorFactories/ActorFactory.h"
 #include "ActorFactories/ActorFactoryBlueprint.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "EditorAssetLibrary.h"
-#include "Engine/AssetManager.h"
 #include "Engine/StaticMesh.h"
 #include "Exporters/Exporter.h"
 #include "Factories/FbxFactory.h"
@@ -89,20 +88,6 @@ bool UBridgeManager::IsSystemPath(FString Path)
 	return false;
 }
 
-FString UBridgeManager::GetPathWithoutExt(FString InPath)
-{
-	FString PackagePath;
-	InPath.Split(".", &PackagePath, NULL);
-	return PackagePath;
-}
-
-FString UBridgeManager::GetSystemPathAsAssetPath(FString Path)
-{
-	FString LocalPath = Path.Replace(TEXT("/Game"),TEXT(""));
-	FString ContentPath =	UBPFunctionLib::GetContentLocation();
-	FString ObjectPath = FPaths::Combine(TEXT("/Game"),ContentPath,LocalPath);
-	return ObjectPath;
-}
 
 FExportAsset UBridgeManager::DuplicateAndSwap(FExportAsset InAsset, bool& bIsSuccessful, FString& OutMessage)
 {
@@ -111,8 +96,8 @@ FExportAsset UBridgeManager::DuplicateAndSwap(FExportAsset InAsset, bool& bIsSuc
 	if (Mesh)
 	{
 
-		FString SourcePackagePath = GetPathWithoutExt(Mesh->GetPathName());
-		FString TargetPath = GetSystemPathAsAssetPath(SourcePackagePath);
+		FString SourcePackagePath = UAssetsBridgeTools::GetPathWithoutExt(Mesh->GetPathName());
+		FString TargetPath = UAssetsBridgeTools::GetSystemPathAsAssetPath(SourcePackagePath);
 		UObject* DuplicateObject = UEditorAssetLibrary::DuplicateAsset(SourcePackagePath, TargetPath);
 		if (DuplicateObject == nullptr)
 		{
@@ -124,19 +109,19 @@ FExportAsset UBridgeManager::DuplicateAndSwap(FExportAsset InAsset, bool& bIsSuc
 		if (DuplicateMesh)
 		{
 			OutAsset.Model = DuplicateMesh;
-			OutAsset.InternalPath = GetPathWithoutExt(DuplicateMesh->GetPathName()).Replace(TEXT("/Game"), TEXT(""));
-			OutAsset.ShortName = GetPathWithoutExt(DuplicateMesh->GetName());
+			OutAsset.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(DuplicateMesh->GetPathName()).Replace(TEXT("/Game"), TEXT(""));
+			OutAsset.ShortName = UAssetsBridgeTools::GetPathWithoutExt(DuplicateMesh->GetName());
 			TArray<FExportMaterial> DupeMats;
 			// now we duplicate each of the materials:
 			auto StaticMats = Mesh->GetStaticMaterials();
 			for (FStaticMaterial SrcMat : StaticMats)
 			{
 				FExportMaterial DupeMaterial;
-				FString SourceMaterialPath = GetPathWithoutExt(SrcMat.MaterialInterface->GetPathName());
+				FString SourceMaterialPath = UAssetsBridgeTools::GetPathWithoutExt(SrcMat.MaterialInterface->GetPathName());
 				auto MatIdx = Mesh->GetMaterialIndex(FName(SrcMat.MaterialSlotName));
 				DupeMaterial.Idx = MatIdx;
 				DupeMaterial.Name = SrcMat.MaterialSlotName.ToString();
-				FString TargetMatPath = GetSystemPathAsAssetPath(SourceMaterialPath);
+				FString TargetMatPath = UAssetsBridgeTools::GetSystemPathAsAssetPath(SourceMaterialPath);
 				UObject* DuplicateMat = UEditorAssetLibrary::DuplicateAsset(SourceMaterialPath, TargetMatPath);
 				if (DuplicateMat == nullptr)
 				{
@@ -148,19 +133,16 @@ FExportAsset UBridgeManager::DuplicateAndSwap(FExportAsset InAsset, bool& bIsSuc
 				if (NewMat != nullptr)
 				{
 					DuplicateMesh->SetMaterial(MatIdx, NewMat);
-					DupeMaterial.InternalPath = GetPathWithoutExt(NewMat->GetPathName());
+					DupeMaterial.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(NewMat->GetPathName());
 				}
 				DupeMats.Add(DupeMaterial);
 			}
 			OutAsset.Model = DuplicateMesh;
 		}
-		UAssetManager& AssetManager = UAssetManager::Get();
-		const FSoftObjectPath& AssetPath = DuplicateMesh->GetPathName();
-		FAssetData AssetData;
-		AssetManager.GetAssetDataForPath(AssetPath, AssetData);
+		FAssetData AssetData = UAssetsBridgeTools::GetAssetDataFromPath(DuplicateMesh->GetPathName());
 		TArray<FAssetData> AssetItems;
 		AssetItems.Add(AssetData);
-		ExecuteSwap(UBPFunctionLib::GetWorldSelection(), AssetItems, bIsSuccessful, OutMessage);
+		ExecuteSwap(UAssetsBridgeTools::GetWorldSelection(), AssetItems, bIsSuccessful, OutMessage);
 	}
 
 	return OutAsset;
@@ -168,7 +150,7 @@ FExportAsset UBridgeManager::DuplicateAndSwap(FExportAsset InAsset, bool& bIsSuc
 
 void UBridgeManager::StartExport(bool& bIsSuccessful, FString& OutMessage)
 {
-	auto Selection = UBPFunctionLib::GetWorldSelection();
+	auto Selection = UAssetsBridgeTools::GetWorldSelection();
 	if (Selection.Num() == 0)
 	{
 		bIsSuccessful = false;
@@ -178,7 +160,7 @@ void UBridgeManager::StartExport(bool& bIsSuccessful, FString& OutMessage)
 	TArray<FExportAsset> ExportArray;
 	for (auto Actor : Selection)
 	{
-		auto MeshData = UBPFunctionLib::GetMeshData(Actor, bIsSuccessful, OutMessage);
+		auto MeshData = UAssetsBridgeTools::GetMeshData(Actor, bIsSuccessful, OutMessage);
 		if (!bIsSuccessful)
 		{
 			return;
@@ -241,7 +223,7 @@ void UBridgeManager::GenerateExport(TArray<FExportAsset> MeshDataArray, bool& bI
 			ExItem.ObjectType = "StaticMesh";
 			ExItem.ExportLocation = *Item.ExportLocation;
 			FString InternalBase = Item.InternalPath.Replace(TEXT("/Game"), TEXT(""));
-			ExItem.InternalPath = GetPathWithoutExt(InternalBase);
+			ExItem.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(InternalBase);
 			ExItem.ShortName = *Item.ShortName;
 			//TArray<UMaterialInterface*> Materials = Mesh->Materials_DEPRECATED;
 			// GetNumMaterials is now missing so we'll have to iterate over the mats manually to a limit of 64 as max for fbx.
@@ -250,7 +232,7 @@ void UBridgeManager::GenerateExport(TArray<FExportAsset> MeshDataArray, bool& bI
 			{
 				FMaterialSlot NewSlotMat;
 				NewSlotMat.Name = mat.MaterialSlotName.ToString();
-				NewSlotMat.InternalPath = GetPathWithoutExt(mat.MaterialInterface.GetPath());
+				NewSlotMat.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(mat.MaterialInterface.GetPath());
 				ExItem.ObjectMaterials.Add(NewSlotMat);
 			}
 			Exporter->CreateDocument();
@@ -267,7 +249,7 @@ void UBridgeManager::GenerateExport(TArray<FExportAsset> MeshDataArray, bool& bI
 			ExItem.ObjectType = "SkeletalMesh";
 			ExItem.ExportLocation = *Item.ExportLocation;
 			FString InternalBase = Item.InternalPath.Replace(TEXT("/Game"), TEXT(""));
-			ExItem.InternalPath = GetPathWithoutExt(InternalBase);
+			ExItem.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(InternalBase);
 			ExItem.ShortName = *Item.ShortName;
 			Exporter->CreateDocument();
 			Exporter->ExportSkeletalMesh(SkeleMesh);
@@ -281,13 +263,13 @@ void UBridgeManager::GenerateExport(TArray<FExportAsset> MeshDataArray, bool& bI
 		}
 	}
 	Exporter->DeleteInstance();
-	UBPFunctionLib::WriteBridgeExportFile(ExportData, bIsSuccessful, OutMessage);
+	UAssetsBridgeTools::WriteBridgeExportFile(ExportData, bIsSuccessful, OutMessage);
 }
 
 void UBridgeManager::GenerateImport(bool& bIsSuccessful, FString& OutMessage)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Starting import"))
-	FBridgeExport BridgeData = UBPFunctionLib::ReadBridgeExportFile(bIsSuccessful, OutMessage);
+	FBridgeExport BridgeData = UAssetsBridgeTools::ReadBridgeExportFile(bIsSuccessful, OutMessage);
 	if (!bIsSuccessful)
 	{
 		return;
