@@ -92,3 +92,4 @@ CMakeLists.txt
 Content/M4_Animations/
 Content/GunSoundPack/
 .vsconfig
+.vscode/
