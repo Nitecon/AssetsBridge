@@ -28,33 +28,42 @@ struct FMaterialSlot
 	
 };
 
-USTRUCT(BlueprintType, Category="JSON")
-struct FBridgeExportElement
+USTRUCT(BlueprintType)
+struct FExportAsset
 {
 	GENERATED_BODY()
 
-public:
-	/** Name of the actual file for use in export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
-	FString ShortName = "";
-
-	/** Where to find it in the content library. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
-	FString InternalPath = "";
-
-	/** Location of where to export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
-	FString ExportLocation = "";
-
-	/** Location of where to export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
-	FString ObjectType = "StaticMesh";
+	/** mesh pointer for it will be set here. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UObject* Model = nullptr;
 
 	/** Material information for the object. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
 	TArray<FMaterialSlot> ObjectMaterials;
+	
+	/** Where to find it in the content library. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString InternalPath = "";
 
-	/* Todo: ADD Checksum at some point...*/
+	/** Name of the actual file for use in export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString RelativeExportPath = "";
+	
+	/** Name of the actual file for use in export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString ShortName = "";
+	
+	/** Location of where to export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString ExportLocation = "";
+
+	/** Location of where to export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString StringType = "StaticMesh";
+
+	/** Location of where to export. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform WorldData = FTransform();
 	
 };
 
@@ -70,7 +79,23 @@ public:
 
 	/** Where to find it in the content library. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
-	TArray<FBridgeExportElement> Objects;
+	TArray<FExportAsset> Objects;
+
+};
+
+USTRUCT(BlueprintType)
+struct FAssetDetails
+{
+	GENERATED_BODY()
+
+public:
+	/** The actor that is currently selected in the world. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	TWeakObjectPtr<UObject> WorldObject;
+
+	/** This is the asset for the selected item. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	FAssetData ObjectAsset;
 
 };
 
@@ -315,6 +340,22 @@ public:
 	UFUNCTION()
 	static TArray<FAssetData> GetAssetsFromActor(const AActor* InActor);
 
+	/**
+	* Gets additional information from a specific actor which will be used in the import / export pipeline.
+	* @returns the list of currently selected items in the world as Assets.
+	*/
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
+	static TArray<FAssetDetails> GetWorldSelectedAssets();
+	
+	/**
+	 * Gets additional information from a specific actor which will be used in the import / export pipeline.
+	 * @param AssetInfo is the actor that should be converted to ExportAsset structure.
+	 * @param bIsSuccessful Returns true of operation is successful.
+	 * @param OutMessage Verbose information on the current operation.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
+	static FExportAsset GetExportInfo(FAssetData AssetInfo, bool& bIsSuccessful, FString& OutMessage);
+	
 	/**
 	 * Gets additional information from a specific actor which will be used in the import / export pipeline.
 	 * @param Actor is the actor that is currently referenced.

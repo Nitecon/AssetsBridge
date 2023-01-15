@@ -227,17 +227,16 @@ void FAssetsBridgeModule::ExportButtonClicked()
 		OpenSettingsMenu();
 		return;
 	}
-	/*auto Assets = GetSelectedUserContext();
-	OpenExportGUI();*/
-	bool Success = false;
+	bool bIsSuccessful = false;
 	FString OutMessage;
-	UBridgeManager::StartExport(Success, OutMessage);
-	if (!Success)
+	UBridgeManager::StartExport(bIsSuccessful, OutMessage);
+	if (!bIsSuccessful)
 	{
-		UE_LOG(LogTemp, Error, TEXT("could not initialize export: %s"), *OutMessage)
+		UAssetsBridgeTools::ShowInfoDialog(OutMessage);
+	}else
+	{
+		UAssetsBridgeTools::ShowNotification(OutMessage);
 	}
-	FText DialogText = FText::FromString(OutMessage);
-	FMessageDialog::Open(EAppMsgType::Ok, DialogText);
 }
 
 void FAssetsBridgeModule::ImportButtonClicked()

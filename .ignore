@@ -1,0 +1,12 @@
+.git
+.idea
+.vs
+.vscode
+Content
+DerivedDataCache
+Intermediate
+Platforms
+Saved
+Plugins/AssetsBridge/Content
+Plugins/AssetsBridge/Intermediate
+Plugins/Developer/RiderLink/Intermediate

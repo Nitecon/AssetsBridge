@@ -260,7 +260,7 @@ TSharedPtr<FJsonObject> UAssetsBridgeTools::ReadJson(FString FilePath, bool& bIs
 }
 
 void UAssetsBridgeTools::WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bIsSuccessful,
-                               FString& OutMessage)
+                                   FString& OutMessage)
 {
 	FString JsonString;
 	if (!FJsonSerializer::Serialize(JsonObject.ToSharedRef(), TJsonWriterFactory<>::Create(&JsonString, 0)))
@@ -365,7 +365,7 @@ FString UAssetsBridgeTools::GetSystemPathAsAssetPath(FString Path)
 {
 	FString LocalPath = Path.Replace(TEXT("/All"), TEXT("")).Replace(TEXT("/Game"),TEXT(""));
 	FString ContentPath = GetContentBrowserRoot();
-	FString ObjectPath = FPaths::Combine(ContentPath,LocalPath);
+	FString ObjectPath = FPaths::Combine(ContentPath, LocalPath);
 	return ObjectPath;
 }
 
@@ -386,20 +386,115 @@ TArray<FAssetData> UAssetsBridgeTools::GetAssetDataFromPaths(TArray<FString> Pat
 TArray<FAssetData> UAssetsBridgeTools::GetAssetsFromActor(const AActor* InActor)
 {
 	TArray<FAssetData> Assets;
-	if(InActor != nullptr)
+	if (InActor != nullptr)
 	{
 		GEditor->SyncToContentBrowser();
 		GetSelectedContentBrowserItems(Assets);
-	}else
+	}
+	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Provided actor is null."))
 	}
 	return Assets;
 }
 
+TArray<FAssetDetails> UAssetsBridgeTools::GetWorldSelectedAssets()
+{
+	TArray<FAssetDetails> Items;
+	auto CurSelection = GEditor->GetSelectedActors();
+	TArray<TWeakObjectPtr<UObject>> Objects;
+	CurSelection->GetSelectedObjects(Objects);
+	for (TWeakObjectPtr<UObject> obj : Objects)
+	{
+		FAssetData Item = GetAssetDataFromPath(obj->GetDetailedInfo());
+		if (Item != nullptr)
+		{
+			FAssetDetails NewItem;
+			NewItem.ObjectAsset = Item;
+			NewItem.WorldObject = obj;
+			Items.Add(NewItem);
+		}
+	}
+	return Items;
+}
+
+FExportAsset UAssetsBridgeTools::GetExportInfo(FAssetData AssetInfo, bool& bIsSuccessful, FString& OutMessage)
+{
+	FExportAsset Result;
+	FString AssetPath;
+	GetExportRoot(AssetPath);
+	FString BasePath;
+	FString ShortName;
+	FString Discard;
+	FPaths::Split(AssetInfo.GetObjectPathString(), BasePath, ShortName, Discard);
+	FString RelativeContentPath = BasePath.Replace(TEXT("/Game"), TEXT(""));
+	Result.Model = AssetInfo.GetAsset();
+	Result.ShortName = ShortName;
+	FString FileName = ShortName.Append(".fbx");
+	FString ExportLoc = FPaths::Combine(AssetPath, RelativeContentPath, FileName);
+	Result.ExportLocation = ExportLoc;
+	Result.InternalPath = RelativeContentPath;
+	
+	Result.RelativeExportPath = RelativeContentPath;
+	UStaticMesh* StaticMesh = Cast<UStaticMesh>(Result.Model);
+	if (StaticMesh != nullptr)
+	{
+		Result.StringType = "StaticMesh";
+		TArray<FStaticMaterial> Materials = StaticMesh->GetStaticMaterials();
+		for (auto Mat : Materials)
+		{
+			FMaterialSlot NewSlotMat;
+			NewSlotMat.Name = Mat.MaterialSlotName.ToString();
+			NewSlotMat.InternalPath = GetPathWithoutExt(Mat.MaterialInterface.GetPath());
+			Result.ObjectMaterials.Add(NewSlotMat);
+			bIsSuccessful = true;
+			OutMessage = FString(TEXT("Data retrieved for static mesh"));
+			return Result;
+		}
+	}
+	USkeletalMesh* SkeletalMesh = Cast<USkeletalMesh>(Result.Model);
+	if (SkeletalMesh != nullptr)
+	{
+		Result.StringType = "SkeletalMesh";
+		TArray<FSkeletalMaterial> Materials = SkeletalMesh->GetMaterials();
+		for (auto Mat : Materials)
+		{
+			FMaterialSlot NewSlotMat;
+			NewSlotMat.Name = Mat.MaterialSlotName.ToString();
+			NewSlotMat.InternalPath = GetPathWithoutExt(Mat.MaterialInterface.GetPath());
+			Result.ObjectMaterials.Add(NewSlotMat);
+			bIsSuccessful = true;
+			OutMessage = FString(TEXT("Data retrieved for skeletal mesh"));
+			return Result;
+		}
+	}
+	Result.StringType = "Unknown";
+	bIsSuccessful = true;
+	OutMessage = FString(TEXT("Data retrieved for unknown object"));
+	return Result;
+}
+
 TArray<FExportAsset> UAssetsBridgeTools::GetMeshData(AActor* Actor, bool& bIsSuccessful, FString& OutMessage)
 {
 	TArray<FExportAsset> Result;
+	/*UPackage* ThePackage = Actor->GetPackage();
+	if (ThePackage)
+	{
+		UPackage* Package = FindPackage(NULL, *ThePackage->GetName());
+		FString FooMsg;
+		FPackageId PkgId = ThePackage->GetPackageId();
+		auto selection = GEditor->GetSelectedActors();
+		TArray<TWeakObjectPtr<UObject>> Objects;
+		selection->GetSelectedObjects(Objects);
+		for (auto obj : Objects)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Object name: %s"), *obj->GetName())
+			UE_LOG(LogTemp, Warning, TEXT("Object info: %s"), *obj->GetDetailedInfo())
+		}
+		//FooMsg = selection->GetPathName();
+		//UE_LOG(LogTemp, Warning, TEXT("Package for info: %s"), *FooMsg)
+	}
+	
 	TArray<UStaticMeshComponent*> Components;
 	Actor->GetComponents<UStaticMeshComponent>(Components);
 	for (const auto Mesh : Components)
@@ -417,7 +512,7 @@ TArray<FExportAsset> UAssetsBridgeTools::GetMeshData(AActor* Actor, bool& bIsSuc
 			FPaths::Split(Mesh->GetStaticMesh().GetPath(), RelativeContentPath, ShortName, Discard);
 			//FPaths::MakePathRelativeTo(RelativeContentPath, *FPaths::ProjectContentDir());
 			RelativeContentPath = RelativeContentPath.Replace(TEXT("/Game"), TEXT(""));
-			IFileManager::Get().MakeDirectory(*FPaths::Combine(AssetPath, RelativeContentPath), true);
+			// TODO READD THIS on actual export: IFileManager::Get().MakeDirectory(*FPaths::Combine(AssetPath, RelativeContentPath), true);
 			// If it starts with Engine or LevelPrototyping I need to ask the user for a new Path & Name as we can't replace engine items.
 			FExportAsset ItemData;
 			ItemData.InternalPath = ItemPath;
@@ -446,6 +541,6 @@ TArray<FExportAsset> UAssetsBridgeTools::GetMeshData(AActor* Actor, bool& bIsSuc
 	}
 
 	bIsSuccessful = true;
-	OutMessage = "Operation Succeeded.";
+	OutMessage = "Operation Succeeded.";*/
 	return Result;
 }

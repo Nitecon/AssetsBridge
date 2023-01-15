@@ -3,14 +3,13 @@
 
 #include "BridgeManager.h"
 
-#include "AssetImportTask.h"
 #include "AssetsBridgeTools.h"
-#include "ContentBrowserModule.h"
-#include "IContentBrowserSingleton.h"
 #include "ActorFactories/ActorFactory.h"
 #include "ActorFactories/ActorFactoryBlueprint.h"
-#include "AssetRegistry/AssetRegistryModule.h"
 #include "EditorAssetLibrary.h"
+#include "IAssetTools.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "PackageTools.h"
 #include "Engine/StaticMesh.h"
 #include "Exporters/Exporter.h"
 #include "Factories/FbxFactory.h"
@@ -73,15 +72,7 @@ void UBridgeManager::ExecuteSwap(TArray<AActor*> SelectList, TArray<FAssetData> 
 
 bool UBridgeManager::IsSystemPath(FString Path)
 {
-	if (Path.StartsWith("/Game/LevelPrototyping"))
-	{
-		return true;
-	}
 	if (Path.StartsWith("/Engine"))
-	{
-		return true;
-	}
-	if (Path.StartsWith("/LevelPrototyping"))
 	{
 		return true;
 	}
@@ -95,7 +86,6 @@ FExportAsset UBridgeManager::DuplicateAndSwap(FExportAsset InAsset, bool& bIsSuc
 	UStaticMesh* Mesh = Cast<UStaticMesh>(InAsset.Model);
 	if (Mesh)
 	{
-
 		FString SourcePackagePath = UAssetsBridgeTools::GetPathWithoutExt(Mesh->GetPathName());
 		FString TargetPath = UAssetsBridgeTools::GetSystemPathAsAssetPath(SourcePackagePath);
 		UObject* DuplicateObject = UEditorAssetLibrary::DuplicateAsset(SourcePackagePath, TargetPath);
@@ -111,12 +101,12 @@ FExportAsset UBridgeManager::DuplicateAndSwap(FExportAsset InAsset, bool& bIsSuc
 			OutAsset.Model = DuplicateMesh;
 			OutAsset.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(DuplicateMesh->GetPathName()).Replace(TEXT("/Game"), TEXT(""));
 			OutAsset.ShortName = UAssetsBridgeTools::GetPathWithoutExt(DuplicateMesh->GetName());
-			TArray<FExportMaterial> DupeMats;
+			TArray<FMaterialSlot> DupeMats;
 			// now we duplicate each of the materials:
 			auto StaticMats = Mesh->GetStaticMaterials();
 			for (FStaticMaterial SrcMat : StaticMats)
 			{
-				FExportMaterial DupeMaterial;
+				FMaterialSlot DupeMaterial;
 				FString SourceMaterialPath = UAssetsBridgeTools::GetPathWithoutExt(SrcMat.MaterialInterface->GetPathName());
 				auto MatIdx = Mesh->GetMaterialIndex(FName(SrcMat.MaterialSlotName));
 				DupeMaterial.Idx = MatIdx;
@@ -148,40 +138,68 @@ FExportAsset UBridgeManager::DuplicateAndSwap(FExportAsset InAsset, bool& bIsSuc
 	return OutAsset;
 }
 
+bool UBridgeManager::HasMatchingExport(TArray<FExportAsset> Assets, FAssetData InAsset)
+{
+	for (FExportAsset ExAsset : Assets)
+	{
+		if (ExAsset.Model->GetPathName().Equals(InAsset.GetAsset()->GetPathName()))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void UBridgeManager::StartExport(bool& bIsSuccessful, FString& OutMessage)
 {
-	auto Selection = UAssetsBridgeTools::GetWorldSelection();
-	if (Selection.Num() == 0)
+	TArray<FExportAsset> ExportArray;
+	TArray<FAssetData> SelectedAssets;
+	UAssetsBridgeTools::GetSelectedContentBrowserItems(SelectedAssets);
+	TArray<FAssetDetails> Selection = UAssetsBridgeTools::GetWorldSelectedAssets();
+	if (Selection.Num() == 0 && SelectedAssets.Num() == 0)
 	{
 		bIsSuccessful = false;
-		OutMessage = FString(TEXT("Please select at least one item in the level to continue."));
+		OutMessage = FString(TEXT("Please select at least one item in the level / content browser to export."));
 		return;
 	}
-	TArray<FExportAsset> ExportArray;
-	for (auto Actor : Selection)
+	if (Selection.Num() > 0)
 	{
-		auto MeshData = UAssetsBridgeTools::GetMeshData(Actor, bIsSuccessful, OutMessage);
-		if (!bIsSuccessful)
+		for (auto SelItem : Selection)
 		{
-			return;
-		}
-		for (auto MeshInfo : MeshData)
-		{
-			if (IsSystemPath(MeshInfo.InternalPath))
+			//SelectedAsset.ObjectAsset.PackagePath.ToString())
+			FExportAsset ExpItem = UAssetsBridgeTools::GetExportInfo(SelItem.ObjectAsset, bIsSuccessful, OutMessage);
+			if (!bIsSuccessful)
 			{
-				// Start duplication and swap, then add to array.
-				FExportAsset NewItem = DuplicateAndSwap(MeshInfo, bIsSuccessful, OutMessage);
+				return;
+			}
+			AActor* ItemActor = Cast<AActor>(SelItem.WorldObject);
+			if (ItemActor)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Found this to be an actual world actor"))
+				ExpItem.WorldData = FTransform(ItemActor->GetActorRotation(), ItemActor->GetActorLocation(), ItemActor->GetActorScale3D());
+			}
+			ExportArray.Add(ExpItem);
+		}
+		// we only have world selections so convert to assets and export with world context
+	}
+	if (SelectedAssets.Num() > 0)
+	{
+		for (auto CAsset : SelectedAssets)
+		{
+			// If a content browser item matches an item in the export array we can skip it as it should be the same item with world context. else add
+			if (!HasMatchingExport(ExportArray, CAsset))
+			{
+				ExportArray.Add(UAssetsBridgeTools::GetExportInfo(CAsset, bIsSuccessful, OutMessage));
 				if (!bIsSuccessful)
 				{
 					return;
 				}
-				ExportArray.Add(NewItem);
-			}
-			else
-			{
-				ExportArray.Add(MeshInfo);
 			}
 		}
+	}
+
+	if (bIsSuccessful)
+	{
 		GenerateExport(ExportArray, bIsSuccessful, OutMessage);
 	}
 }
@@ -200,9 +218,7 @@ void UBridgeManager::GenerateExport(TArray<FExportAsset> MeshDataArray, bool& bI
 	for (auto Item : MeshDataArray)
 	{
 		bool bDidExport = false;
-		FBridgeExportElement ExItem;
-		
-
+		//FBridgeExportElement ExItem;
 		// Create the distination directory if it doesn't already exist
 		FString ItemPath = FPaths::GetPath(*Item.ExportLocation);
 		if (!IFileManager::Get().DirectoryExists(*ItemPath))
@@ -220,51 +236,32 @@ void UBridgeManager::GenerateExport(TArray<FExportAsset> MeshDataArray, bool& bI
 		UStaticMesh* Mesh = Cast<UStaticMesh>(Item.Model);
 		if (Mesh != nullptr)
 		{
-			ExItem.ObjectType = "StaticMesh";
-			ExItem.ExportLocation = *Item.ExportLocation;
-			FString InternalBase = Item.InternalPath.Replace(TEXT("/Game"), TEXT(""));
-			ExItem.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(InternalBase);
-			ExItem.ShortName = *Item.ShortName;
-			//TArray<UMaterialInterface*> Materials = Mesh->Materials_DEPRECATED;
-			// GetNumMaterials is now missing so we'll have to iterate over the mats manually to a limit of 64 as max for fbx.
-			TArray<FStaticMaterial> Materials = Mesh->GetStaticMaterials();
-			for (auto mat : Materials)
-			{
-				FMaterialSlot NewSlotMat;
-				NewSlotMat.Name = mat.MaterialSlotName.ToString();
-				NewSlotMat.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(mat.MaterialInterface.GetPath());
-				ExItem.ObjectMaterials.Add(NewSlotMat);
-			}
 			Exporter->CreateDocument();
-			Exporter->ExportStaticMesh(Mesh, &Materials);
+			Exporter->ExportStaticMesh(Mesh, &Mesh->GetStaticMaterials());
 			Exporter->WriteToFile(*Item.ExportLocation);
 			Exporter->CloseDocument();
 			//UGLTFExporter::ExportToGLTF(Mesh, *Item.ExportLocation.Replace(TEXT(".fbx"), TEXT(".gltf")));
 			bDidExport = true;
 		}
-
 		USkeletalMesh* SkeleMesh = Cast<USkeletalMesh>(Item.Model);
 		if (SkeleMesh != nullptr)
 		{
-			ExItem.ObjectType = "SkeletalMesh";
-			ExItem.ExportLocation = *Item.ExportLocation;
-			FString InternalBase = Item.InternalPath.Replace(TEXT("/Game"), TEXT(""));
-			ExItem.InternalPath = UAssetsBridgeTools::GetPathWithoutExt(InternalBase);
-			ExItem.ShortName = *Item.ShortName;
 			Exporter->CreateDocument();
 			Exporter->ExportSkeletalMesh(SkeleMesh);
 			Exporter->WriteToFile(*Item.ExportLocation);
 			Exporter->CloseDocument();
+			//UGLTFExporter::ExportToGLTF(Mesh, *Item.ExportLocation.Replace(TEXT(".fbx"), TEXT(".gltf")));
 			bDidExport = true;
 		}
 		if (bDidExport)
 		{
-			ExportData.Objects.Add(ExItem);
+			ExportData.Objects.Add(Item);
 		}
 	}
 	Exporter->DeleteInstance();
 	UAssetsBridgeTools::WriteBridgeExportFile(ExportData, bIsSuccessful, OutMessage);
 }
+
 
 void UBridgeManager::GenerateImport(bool& bIsSuccessful, FString& OutMessage)
 {
@@ -275,101 +272,206 @@ void UBridgeManager::GenerateImport(bool& bIsSuccessful, FString& OutMessage)
 		return;
 	}
 
-	UnFbx::FFbxImporter* Importer = UnFbx::FFbxImporter::GetInstance();
-
 	for (auto Item : BridgeData.Objects)
 	{
-		TArray<UObject*> ReturnObjects;
-		if (Item.ObjectType.Equals("StaticMesh"))
+		FString FbxFileName = FPaths::GetBaseFilename(Item.ExportLocation);
+		FString ImportPackageName = FString("/Game") + Item.InternalPath + FString("/") + Item.ShortName;
+		ImportPackageName = UPackageTools::SanitizePackageName(ImportPackageName);
+		bool bHasExisting = false;
+		FString ExistingName;
+		if (HasExistingPackageAtPath(ImportPackageName))
 		{
-			bool bPostMapMaterials = false;
-			FString InternalName = FPaths::Combine(FString("/Game"), *Item.InternalPath, *Item.ShortName);
-			UE_LOG(LogTemp, Warning, TEXT("Creating Package: %s"), *InternalName)
-			UPackage* Package = CreatePackage(*InternalName);
-			if (!ensure(Package))
+			bHasExisting = true;
+			UE_LOG(LogTemp, Warning, TEXT("Package already exists at %s"), *ImportPackageName)
+			ExistingName = MoveExistingPackage(ImportPackageName, bIsSuccessful, OutMessage);
+			if (!bIsSuccessful)
 			{
-				// Failed to create the package to hold this asset for some reason
-				continue;
-			}
-			UFbxFactory* Factory = NewObject<UFbxFactory>(UFbxFactory::StaticClass(), FName("Factory"), RF_NoFlags);
-			Factory->ResetState();
-			if (Factory == nullptr)
-			{
-				bIsSuccessful = false;
-				OutMessage = FString::Printf(TEXT("cannot instantiate import factory."));
 				return;
 			}
-			bool bImportWasCancelled = false;
-			UClass* ImportAssetType = Factory->ResolveSupportedClass();
-			UObject* Result;
-			UAssetImportTask* ImportTask = NewObject<UAssetImportTask>(UAssetImportTask::StaticClass());
-			ImportTask->bAutomated = true;
-			ImportTask->bReplaceExisting = true;
-			ImportTask->Options = Factory->ImportUI;
-			Factory->SetAssetImportTask(ImportTask);
-			Factory->ImportUI->bImportMaterials = true;
-			
-			if (Item.ObjectMaterials.Num() > 0)
-			{
-				Factory->ImportUI->bImportMaterials = false;
-				bPostMapMaterials = false;
-			}
-			else
-			{
-				Factory->ImportUI->bImportMaterials = true;
-				bPostMapMaterials = false;
-				
-			}
-			//Factory->ImportUI->bImportMaterials = false;
-			Result = Factory->ImportObject(ImportAssetType, Package, FName(*Item.ShortName), RF_Public | RF_Standalone | RF_Transactional, Item.ExportLocation, nullptr, bImportWasCancelled);
-			// Do not report any error if the operation was canceled.
-			if (!bImportWasCancelled)
-			{
-				if (Result)
-				{
-					UStaticMesh* ResultMesh = Cast<UStaticMesh>(Result);
-					if (ResultMesh)
-					{
-						if (bPostMapMaterials)
-						{
-							for (auto Mat : Item.ObjectMaterials)
-							{
-								UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, *Mat.InternalPath);
-								if (Material)
-								{
-									ResultMesh->SetMaterial(Mat.Idx, Material);
-								}
-							}
-						}
-						
-					}
+			UE_LOG(LogTemp, Warning, TEXT("Moved existing package %s to: %s"),*ImportPackageName, *ExistingName);
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Ready to process %s"), *ImportPackageName);
+		//UObject* Obj = ImportFBX(Item.InternalPath, Item.ShortName, Item.ExportLocation, bIsSuccessful, OutMessage);
+	}
+	bIsSuccessful = true;
+	OutMessage = FString::Printf(TEXT("Operation was successful"));
+}
 
-					ReturnObjects.Add(Result);
+void UBridgeManager::ReplaceRefs(FString OldPackageName, UPackage* NewPackage, bool& bIsSuccessful, FString& OutMessage)
+{
+	// move assets from the old package to the new package
+	TArray<UObject*> Assets;
+	GetObjectsWithOuter(FindPackage(nullptr, *OldPackageName), Assets);
+	for (UObject* Asset : Assets)
+	{
+		Asset->Rename(nullptr, NewPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+	}
 
-					// Notify the asset registry
-					FAssetRegistryModule::AssetCreated(Result);
-					GEditor->BroadcastObjectReimported(Result);
-					bIsSuccessful = true;
-				}
-				else
-				{
-					FString Msg = FString::Printf(TEXT("Failed to import '%s'. Failed to create asset '%s'.\nPlease see Output Log for details."), *Item.ExportLocation, *Item.ShortName);
-					const FText Message = FText::FromString(Msg);
-					if (!Factory->IsAutomatedImport())
-					{
-						FMessageDialog::Open(EAppMsgType::Ok, Message);
-					}
-					UE_LOG(LogTemp, Warning, TEXT("%s"), *Message.ToString());
-				}
-			}
-			if (ReturnObjects.Num())
+	// replace all references to the old package with references to the new package
+	TArray<UObject*> Objects;
+	GetObjectsOfClass(UObject::StaticClass(), Objects);
+	if (Objects.Num() > 0)
+	{
+		for (UObject* Obj : Objects)
+		{
+			if (Obj != nullptr && Obj->GetOuter() != nullptr)
 			{
-				FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-				ContentBrowserModule.Get().SyncBrowserToAssets(ReturnObjects, /*bAllowLockedBrowsers=*/true);
+				if (Obj->GetOuter()->GetName() == OldPackageName)
+				{
+					Obj->Rename(nullptr, NewPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+				}
 			}
 		}
 	}
 
+
+	// remove the old package from the asset registry
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	IAssetRegistry& AssetRegistrySingleton = AssetRegistryModule.Get();
+	TArray<FAssetData> AssetsData;
+	AssetRegistrySingleton.GetAssetsByPackageName(*OldPackageName, AssetsData);
+	for (const FAssetData& Asset : AssetsData)
+	{
+		bIsSuccessful = UEditorAssetLibrary::DeleteAsset(Asset.GetObjectPathString());
+		if (!bIsSuccessful)
+		{
+			OutMessage = "Could not delete asset";
+			return;
+		}
+	}
 	bIsSuccessful = true;
-	OutMessage = FString::Printf(TEXT("Operation was successful"));
+	OutMessage = "References Replaced";
 }
+
+bool UBridgeManager::HasExistingPackageAtPath(FString InPath)
+{
+	FString PackageName = FPackageName::ObjectPathToPackageName(InPath);
+	return FPackageName::DoesPackageExist(PackageName);
+}
+
+FString UBridgeManager::MoveExistingPackage(FString InPath, bool& bIsSuccessful, FString& OutMessage)
+{
+	FString PackageName = FPackageName::ObjectPathToPackageName(InPath);
+	UPackage* ExistingPackage = FindPackage(nullptr, *PackageName);
+	FString NewPackageName = PackageName + "_old";
+	if (ExistingPackage != nullptr)
+	{
+		TArray<FAssetData> Assets;
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		AssetRegistryModule.Get().GetAssetsByPackageName(FName(PackageName), Assets);
+		UPackage* PrimPackage = nullptr;
+		TArray<UObject*> AssetsToMove;
+		for (const FAssetData& Asset : Assets)
+		{
+			FAssetRenameManager::RenameAssets(const TArray<FAssetRenameData>& AssetsAndNames)
+			UObject* Obj = Asset.GetAsset();
+			Obj->Rename(*Obj->GetName().Append("_old"), ExistingPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+			AssetsToMove.Add(Obj);
+			PrimPackage = Obj->GetPackage();
+		}
+		//ExistingPackage->Rename(*NewPackageName, GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
+		UPackageTools::SavePackagesForObjects(AssetsToMove);
+		UPackageTools::ReloadPackages(TArray<UPackage*>{PrimPackage});
+	}
+	return NewPackageName;
+}
+
+UObject* UBridgeManager::ImportFBX(FString InternalPath, FString AssetName, FString ExternalFile, bool& bIsSuccessful, FString& OutMessage)
+{
+	FString LogMessage;
+	UObject* ImportedObject = nullptr;
+	//ExternalFile.Replace(TEXT("\""), TEXT("/"));
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	UFbxFactory* FbxFactory = NewObject<UFbxFactory>();
+	FbxFactory->AddToRoot();
+	//FbxFactory->EnableShowOption();
+
+	FString FbxFileName = FPaths::GetBaseFilename(ExternalFile);
+	FString ImportPackageName = FString("/Game") + InternalPath + FString("/") + FbxFileName;
+	ImportPackageName = UPackageTools::SanitizePackageName(ImportPackageName);
+	bool bIsReImportTask = false;
+	EObjectFlags Flags;
+	UStaticMesh* ExistingMesh = nullptr;
+	UPackage* ExistingPackage = nullptr;
+	FString ExistingImportPackageName = ImportPackageName;
+	AssetName.Append("Foo");
+	
+	if (FPackageName::DoesPackageExist(ImportPackageName))
+	{
+		bIsReImportTask = true;
+		ExistingMesh = FindObject<UStaticMesh>(ExistingPackage, *AssetName);
+		if (ExistingMesh != nullptr)
+		{
+			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(ExistingMesh);
+		}
+
+		ImportPackageName.Append("_New");
+		LogMessage = ImportPackageName + FString(" already exists!, import will use: ") + ImportPackageName;
+		UE_LOG(LogTemp, Warning, TEXT("Ex: %s"), *LogMessage);
+	}
+	UPackage* NewPackage = CreatePackage(*ImportPackageName);
+	NewPackage->FullyLoad();
+
+	Flags = RF_Standalone | RF_Public | RF_Transient;
+	FbxFactory->ImportUI->bIsObjImport = true;
+	bool bImportCancelled = false;
+	//ImportedObject = FbxFactory->ImportObject(UStaticMesh::StaticClass(),ModelPackage, FName(*FbxFileName),RF_Standalone | RF_Public,ExternalFile,nullptr,bImportCancelled);
+	ImportedObject = FbxFactory->ImportObject(UStaticMesh::StaticClass(), NewPackage, FName(*FbxFileName), Flags, ExternalFile, nullptr, bImportCancelled);
+
+	if (bImportCancelled)
+	{
+		if (NewPackage != nullptr)
+		{
+			bIsSuccessful = false;
+			OutMessage = "Import was canceled";
+			// @todo clean up created package
+			NewPackage->ConditionalBeginDestroy();
+			FbxFactory->RemoveFromRoot();
+			FbxFactory->ConditionalBeginDestroy();
+			return nullptr;
+		}
+	}
+
+	ReplaceRefs(ExistingImportPackageName, NewPackage, bIsSuccessful, OutMessage);
+	if (bIsSuccessful)
+	{
+		TArray<FAssetData> Assets;
+		AssetRegistryModule.Get().GetAssetsByPackageName(*ExistingImportPackageName, Assets);
+		for (const FAssetData& Asset : Assets)
+		{
+			bIsSuccessful = UEditorAssetLibrary::DeleteAsset(Asset.GetObjectPathString());
+			FAssetRegistryModule::AssetDeleted(Asset.GetAsset());
+			if (!bIsSuccessful)
+			{
+				OutMessage = "Could not remove existing object...";
+				bIsSuccessful = false;
+				return nullptr;
+			}
+		}
+		CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS);
+	}
+	// Unload the old package.
+	
+	if (bIsSuccessful)
+	{
+		if (bIsReImportTask)
+		{
+			//TODO: ModelPackage->Rename(*ExistingImportPackageName);
+			FString PackageName = NewPackage->GetName();
+		}
+		UPackageTools::SavePackagesForObjects(TArray<UObject*>{ImportedObject});
+		OutMessage = "Renamed successfully";
+	}
+	else
+	{
+		bIsSuccessful = false;
+		OutMessage = "Could not rename new asset to old";
+	}
+	FbxFactory->RemoveFromRoot();
+	FbxFactory->ConditionalBeginDestroy();
+	FbxFactory = nullptr;
+	OutMessage = "Import success";
+	return ImportedObject;
+}
+
