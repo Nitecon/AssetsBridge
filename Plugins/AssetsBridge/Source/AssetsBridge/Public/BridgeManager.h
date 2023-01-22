@@ -98,13 +98,9 @@ public:
 	 * Checks to see if a package exists at a particular path
 	 */
 	static bool HasExistingPackageAtPath(FString InPath);
+	
 
-	/*
-	 * Moves an existing package to a new path with _old appended to the end of the name.
-	 */
-	static FString MoveExistingPackage(FString InPath, bool& bIsSuccessful, FString& OutMessage);
-
-	static UObject* ImportFBX(FString InternalPath, FString AssetName, FString ExternalFile, bool& bIsSuccessful, FString& OutMessage);
+	static UObject* ImportFBX(FString InternalPath, FString AssetName, FString ExternalFile,bool bisReImport, bool& bIsSuccessful, FString& OutMessage);
 
 private:
 };

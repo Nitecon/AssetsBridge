@@ -7,7 +7,6 @@
 #include "ActorFactories/ActorFactory.h"
 #include "ActorFactories/ActorFactoryBlueprint.h"
 #include "EditorAssetLibrary.h"
-#include "IAssetTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "PackageTools.h"
 #include "Engine/StaticMesh.h"
@@ -213,6 +212,7 @@ void UBridgeManager::GenerateExport(TArray<FExportAsset> MeshDataArray, bool& bI
 	INodeNameAdapter NodeNameAdapter;
 	Exporter->FillExportOptions(false, false, UExporter::CurrentFilename, bIsCanceled, bExportAll);
 	Exporter->SetExportOptionsOverride(nullptr);
+	
 	FBridgeExport ExportData;
 	ExportData.Operation = "UnrealExport";
 	for (auto Item : MeshDataArray)
@@ -281,17 +281,37 @@ void UBridgeManager::GenerateImport(bool& bIsSuccessful, FString& OutMessage)
 		FString ExistingName;
 		if (HasExistingPackageAtPath(ImportPackageName))
 		{
+			UStaticMesh* ExistingMesh = FindObject<UStaticMesh>(nullptr, *ImportPackageName);
+			if (ExistingMesh != nullptr)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Found existing mesh, closing all related editors"))
+				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(ExistingMesh);
+			}
+
 			bHasExisting = true;
-			UE_LOG(LogTemp, Warning, TEXT("Package already exists at %s"), *ImportPackageName)
+			/*UE_LOG(LogTemp, Warning, TEXT("Package already exists at %s"), *ImportPackageName)
 			ExistingName = MoveExistingPackage(ImportPackageName, bIsSuccessful, OutMessage);
 			if (!bIsSuccessful)
 			{
 				return;
 			}
-			UE_LOG(LogTemp, Warning, TEXT("Moved existing package %s to: %s"),*ImportPackageName, *ExistingName);
+			UE_LOG(LogTemp, Warning, TEXT("Moved existing package %s to: %s"),*ImportPackageName, *ExistingName);*/
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Ready to process %s"), *ImportPackageName);
-		//UObject* Obj = ImportFBX(Item.InternalPath, Item.ShortName, Item.ExportLocation, bIsSuccessful, OutMessage);
+		UObject* Obj = ImportFBX(Item.InternalPath, Item.ShortName, Item.ExportLocation,bHasExisting,bIsSuccessful, OutMessage);
+		if (!bIsSuccessful)
+		{
+			return;
+		}
+		/*if (bHasExisting)
+		{
+			ReplaceRefs(ImportPackageName.Append("_old"), Obj->GetPackage(), bIsSuccessful, OutMessage);
+			if (!bIsSuccessful)
+			{
+				return;
+			}
+		}*/
+		
 	}
 	bIsSuccessful = true;
 	OutMessage = FString::Printf(TEXT("Operation was successful"));
@@ -323,8 +343,6 @@ void UBridgeManager::ReplaceRefs(FString OldPackageName, UPackage* NewPackage, b
 			}
 		}
 	}
-
-
 	// remove the old package from the asset registry
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	IAssetRegistry& AssetRegistrySingleton = AssetRegistryModule.Get();
@@ -349,76 +367,26 @@ bool UBridgeManager::HasExistingPackageAtPath(FString InPath)
 	return FPackageName::DoesPackageExist(PackageName);
 }
 
-FString UBridgeManager::MoveExistingPackage(FString InPath, bool& bIsSuccessful, FString& OutMessage)
-{
-	FString PackageName = FPackageName::ObjectPathToPackageName(InPath);
-	UPackage* ExistingPackage = FindPackage(nullptr, *PackageName);
-	FString NewPackageName = PackageName + "_old";
-	if (ExistingPackage != nullptr)
-	{
-		TArray<FAssetData> Assets;
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		AssetRegistryModule.Get().GetAssetsByPackageName(FName(PackageName), Assets);
-		UPackage* PrimPackage = nullptr;
-		TArray<UObject*> AssetsToMove;
-		for (const FAssetData& Asset : Assets)
-		{
-			FAssetRenameManager::RenameAssets(const TArray<FAssetRenameData>& AssetsAndNames)
-			UObject* Obj = Asset.GetAsset();
-			Obj->Rename(*Obj->GetName().Append("_old"), ExistingPackage, REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-			AssetsToMove.Add(Obj);
-			PrimPackage = Obj->GetPackage();
-		}
-		//ExistingPackage->Rename(*NewPackageName, GetTransientPackage(), REN_DontCreateRedirectors | REN_DoNotDirty | REN_NonTransactional);
-		UPackageTools::SavePackagesForObjects(AssetsToMove);
-		UPackageTools::ReloadPackages(TArray<UPackage*>{PrimPackage});
-	}
-	return NewPackageName;
-}
-
-UObject* UBridgeManager::ImportFBX(FString InternalPath, FString AssetName, FString ExternalFile, bool& bIsSuccessful, FString& OutMessage)
+UObject* UBridgeManager::ImportFBX(FString InternalPath, FString AssetName, FString ExternalFile,bool bisReImport, bool& bIsSuccessful, FString& OutMessage)
 {
 	FString LogMessage;
 	UObject* ImportedObject = nullptr;
-	//ExternalFile.Replace(TEXT("\""), TEXT("/"));
-
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	UFbxFactory* FbxFactory = NewObject<UFbxFactory>();
 	FbxFactory->AddToRoot();
-	//FbxFactory->EnableShowOption();
-
-	FString FbxFileName = FPaths::GetBaseFilename(ExternalFile);
+	FbxFactory->ImportUI->bImportMaterials = false;
+	FbxFactory->ImportUI->bImportTextures = false;
+	FbxFactory->ImportUI->bIsObjImport = true;
+	FbxFactory->ImportUI->bIsReimport = bisReImport;
+	FbxFactory->ImportUI->StaticMeshImportData->ImportRotation = FRotator(0, -90, 0); // X = Roll , Y = Pitch, Z = Yaw
+	const FString FbxFileName = FPaths::GetBaseFilename(ExternalFile);
 	FString ImportPackageName = FString("/Game") + InternalPath + FString("/") + FbxFileName;
 	ImportPackageName = UPackageTools::SanitizePackageName(ImportPackageName);
-	bool bIsReImportTask = false;
-	EObjectFlags Flags;
-	UStaticMesh* ExistingMesh = nullptr;
-	UPackage* ExistingPackage = nullptr;
-	FString ExistingImportPackageName = ImportPackageName;
-	AssetName.Append("Foo");
-	
-	if (FPackageName::DoesPackageExist(ImportPackageName))
-	{
-		bIsReImportTask = true;
-		ExistingMesh = FindObject<UStaticMesh>(ExistingPackage, *AssetName);
-		if (ExistingMesh != nullptr)
-		{
-			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllEditorsForAsset(ExistingMesh);
-		}
-
-		ImportPackageName.Append("_New");
-		LogMessage = ImportPackageName + FString(" already exists!, import will use: ") + ImportPackageName;
-		UE_LOG(LogTemp, Warning, TEXT("Ex: %s"), *LogMessage);
-	}
 	UPackage* NewPackage = CreatePackage(*ImportPackageName);
 	NewPackage->FullyLoad();
-
-	Flags = RF_Standalone | RF_Public | RF_Transient;
-	FbxFactory->ImportUI->bIsObjImport = true;
+	const EObjectFlags Flags = RF_Standalone | RF_Public | RF_Transient;
+	
 	bool bImportCancelled = false;
-	//ImportedObject = FbxFactory->ImportObject(UStaticMesh::StaticClass(),ModelPackage, FName(*FbxFileName),RF_Standalone | RF_Public,ExternalFile,nullptr,bImportCancelled);
-	ImportedObject = FbxFactory->ImportObject(UStaticMesh::StaticClass(), NewPackage, FName(*FbxFileName), Flags, ExternalFile, nullptr, bImportCancelled);
-
+	ImportedObject = FbxFactory->ImportObject(UStaticMesh::StaticClass(), NewPackage, FName(*AssetName), Flags, ExternalFile, nullptr, bImportCancelled);
 	if (bImportCancelled)
 	{
 		if (NewPackage != nullptr)
@@ -432,46 +400,19 @@ UObject* UBridgeManager::ImportFBX(FString InternalPath, FString AssetName, FStr
 			return nullptr;
 		}
 	}
-
-	ReplaceRefs(ExistingImportPackageName, NewPackage, bIsSuccessful, OutMessage);
-	if (bIsSuccessful)
+	if (!bIsSuccessful)
 	{
-		TArray<FAssetData> Assets;
-		AssetRegistryModule.Get().GetAssetsByPackageName(*ExistingImportPackageName, Assets);
-		for (const FAssetData& Asset : Assets)
-		{
-			bIsSuccessful = UEditorAssetLibrary::DeleteAsset(Asset.GetObjectPathString());
-			FAssetRegistryModule::AssetDeleted(Asset.GetAsset());
-			if (!bIsSuccessful)
-			{
-				OutMessage = "Could not remove existing object...";
-				bIsSuccessful = false;
-				return nullptr;
-			}
-		}
-		CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS);
+		OutMessage = "Could not import fbx";
+	}else
+	{
+		OutMessage = "Import success";
 	}
-	// Unload the old package.
+	UPackage* CurPackage = FindPackage(nullptr, *ImportPackageName);
+	CurPackage->FullyLoad();
 	
-	if (bIsSuccessful)
-	{
-		if (bIsReImportTask)
-		{
-			//TODO: ModelPackage->Rename(*ExistingImportPackageName);
-			FString PackageName = NewPackage->GetName();
-		}
-		UPackageTools::SavePackagesForObjects(TArray<UObject*>{ImportedObject});
-		OutMessage = "Renamed successfully";
-	}
-	else
-	{
-		bIsSuccessful = false;
-		OutMessage = "Could not rename new asset to old";
-	}
 	FbxFactory->RemoveFromRoot();
 	FbxFactory->ConditionalBeginDestroy();
 	FbxFactory = nullptr;
-	OutMessage = "Import success";
 	return ImportedObject;
 }
 
