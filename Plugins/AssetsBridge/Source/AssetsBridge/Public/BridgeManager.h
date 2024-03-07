@@ -3,7 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AssetExportTask.h"
 #include "BridgeManager.generated.h"
+
+class UAssetImportTask;
+class UFactory;
 
 
 /**
@@ -27,7 +31,8 @@ public:
 	 * @param OutMessage provides verbose information on the status of the operation.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Exports")
-	static void ExecuteSwap(TArray<AActor*> SelectList, TArray<FAssetData> ContentList, bool& bIsSuccessful, FString& OutMessage);
+	static void ExecuteSwap(TArray<AActor*> SelectList, TArray<FAssetData> ContentList, bool& bIsSuccessful,
+	                        FString& OutMessage);
 
 	/**
 	 * This functions checks to see if the actor path is part of "Engine" content, so it can be duplicated first.
@@ -58,6 +63,15 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Exports")
 	static bool HasMatchingExport(TArray<FExportAsset> Assets, FAssetData InAsset);
+
+
+	/**
+	 * This generates a checksum from the FTransform object.
+	 * @param Object the FTransform object to generate a checksum from.
+	 * @return Returns a string representation of the checksum.
+	 */
+	UFUNCTION(BlueprintCallable, Category="Assets Bridge Tools")
+	static FString ComputeTransformChecksum(FWorldData& Object);
 
 
 	/**
@@ -98,9 +112,13 @@ public:
 	 * Checks to see if a package exists at a particular path
 	 */
 	static bool HasExistingPackageAtPath(FString InPath);
-	
 
-	static UObject* ImportFBX(FString InternalPath, FString AssetName, FString ExternalFile,bool bisReImport, bool& bIsSuccessful, FString& OutMessage);
+	UFUNCTION(BlueprintCallable, Category="Asset Bridge Tools")
+	static UObject* ImportAsset(FString InSourcePath, FString InDestPath, bool& bIsSuccessful, FString& OutMessage);
 
 private:
+	static UObject* ProcessTask(UAssetImportTask* ImportTask, bool& bIsSuccessful, FString& OutMessage);
+	static UAssetImportTask* CreateImportTask(FString InSourcePath, FString InDestPath, UFactory* InFactory,
+	                                          UObject* ExtraOpts, bool& bIsSuccessful, FString& OutMessage);
+	static void ExportObject(FString InObjInternalPath, FString InDestPath, bool& bIsSuccessful, FString& OutMessage);
 };

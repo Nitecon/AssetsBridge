@@ -3,7 +3,6 @@
 #include "AssetsBridgeTools.h"
 
 #include "ABSettings.h"
-#include "BridgeManager.h"
 #include "ContentBrowserModule.h"
 #include "EditorDirectories.h"
 #include "IContentBrowserSingleton.h"
@@ -37,7 +36,7 @@ FString UAssetsBridgeTools::GetExportPathFromInternal(FString NewInternalPath, F
 	return NewExportPath;
 }
 
-FBridgeExport UAssetsBridgeTools::ReadBridgeExportFile(bool &bIsSuccessful, FString &OutMessage)
+FBridgeExport UAssetsBridgeTools::ReadBridgeExportFile(bool& bIsSuccessful, FString& OutMessage)
 {
 	FString AssetBase;
 	GetExportRoot(AssetBase);
@@ -62,7 +61,7 @@ FBridgeExport UAssetsBridgeTools::ReadBridgeExportFile(bool &bIsSuccessful, FStr
 	return ReturnData;
 }
 
-void UAssetsBridgeTools::WriteBridgeExportFile(FBridgeExport Data, bool &bIsSuccessful, FString &OutMessage)
+void UAssetsBridgeTools::WriteBridgeExportFile(FBridgeExport Data, bool& bIsSuccessful, FString& OutMessage)
 {
 	TSharedPtr<FJsonObject> JsonObject = FJsonObjectConverter::UStructToJsonObject(Data);
 	if (JsonObject == nullptr)
@@ -80,13 +79,13 @@ void UAssetsBridgeTools::WriteBridgeExportFile(FBridgeExport Data, bool &bIsSucc
 
 bool UAssetsBridgeTools::ContentBrowserFromWorldSelection()
 {
-	TArray<AActor *> Selection = GetWorldSelection();
+	TArray<AActor*> Selection = GetWorldSelection();
 	if (Selection.Num() < 1)
 	{
 		return false;
 	}
 	TArray<FString> SelectedPaths;
-	for (AActor *Actor : Selection)
+	for (AActor* Actor : Selection)
 	{
 		FAssetData ItemData = GetAssetDataFromPath(Actor->GetPathName());
 		if (ItemData.IsValid())
@@ -98,19 +97,19 @@ bool UAssetsBridgeTools::ContentBrowserFromWorldSelection()
 	{
 		return false;
 	}
-	FContentBrowserModule &ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-	IContentBrowserSingleton &ContentBrowserSingleton = ContentBrowserModule.Get();
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	IContentBrowserSingleton& ContentBrowserSingleton = ContentBrowserModule.Get();
 	ContentBrowserSingleton.SetSelectedPaths(SelectedPaths, true);
 	return true;
 }
 
-void UAssetsBridgeTools::GetSelectedContentBrowserPath(FString &OutContentLocation)
+void UAssetsBridgeTools::GetSelectedContentBrowserPath(FString& OutContentLocation)
 {
 	TArray<FAssetData> OutSelectedAssets;
 	TArray<FString> OutSelectedFolders;
 	TArray<FString> OutViewFolders;
-	FContentBrowserModule &ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-	IContentBrowserSingleton &ContentBrowserSingleton = ContentBrowserModule.Get();
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	IContentBrowserSingleton& ContentBrowserSingleton = ContentBrowserModule.Get();
 
 	ContentBrowserSingleton.GetSelectedFolders(OutSelectedFolders);
 	ContentBrowserSingleton.GetSelectedPathViewFolders(OutViewFolders);
@@ -132,32 +131,32 @@ void UAssetsBridgeTools::GetSelectedContentBrowserPath(FString &OutContentLocati
 
 void UAssetsBridgeTools::SetSelectedContentBrowserItems(TArray<FAssetData> Assets)
 {
-	FContentBrowserModule &ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-	IContentBrowserSingleton &ContentBrowserSingleton = ContentBrowserModule.Get();
+	const FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	IContentBrowserSingleton& ContentBrowserSingleton = ContentBrowserModule.Get();
 	ContentBrowserSingleton.SyncBrowserToAssets(Assets);
 }
 
 void UAssetsBridgeTools::SetSelectedContentBrowserPaths(TArray<FString> Paths)
 {
-	FContentBrowserModule &ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-	IContentBrowserSingleton &ContentBrowserSingleton = ContentBrowserModule.Get();
+	const FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	IContentBrowserSingleton& ContentBrowserSingleton = ContentBrowserModule.Get();
 	TArray<FAssetData> AssetDatas = GetAssetDataFromPaths(Paths);
 	ContentBrowserSingleton.SyncBrowserToAssets(AssetDatas);
 }
 
-void UAssetsBridgeTools::GetSelectedContentBrowserItems(TArray<FAssetData> &SelectedAssets)
+void UAssetsBridgeTools::GetSelectedContentBrowserItems(TArray<FAssetData>& SelectedAssets)
 {
-	FContentBrowserModule &ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-	IContentBrowserSingleton &ContentBrowserSingleton = ContentBrowserModule.Get();
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	IContentBrowserSingleton& ContentBrowserSingleton = ContentBrowserModule.Get();
 	ContentBrowserSingleton.GetSelectedAssets(SelectedAssets);
 }
 
-FString UAssetsBridgeTools::GetOSDirectoryLocation(const FString &DialogTitle)
+FString UAssetsBridgeTools::GetOSDirectoryLocation(const FString& DialogTitle)
 {
-	if (IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get())
+	if (IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get())
 	{
 		FString DestinationFolder;
-		const void *ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
+		const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
 		const FString DefaultLocation(FEditorDirectories::Get().GetLastDirectory(ELastDirectory::GENERIC_IMPORT));
 
 		const bool bFolderSelected = DesktopPlatform->OpenDirectoryDialog(
@@ -175,13 +174,13 @@ FString UAssetsBridgeTools::GetOSDirectoryLocation(const FString &DialogTitle)
 	return FString("Unknown");
 }
 
-FString UAssetsBridgeTools::GetOSFileLocation(const FString &DialogTitle, const FString &FileTypes)
+FString UAssetsBridgeTools::GetOSFileLocation(const FString& DialogTitle, const FString& FileTypes)
 {
-	if (IDesktopPlatform *DesktopPlatform = FDesktopPlatformModule::Get())
+	if (IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get())
 	{
 		FString DestinationFolder;
 		TArray<FString> OutFiles;
-		const void *ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
+		const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
 		const FString DefaultLocation(FEditorDirectories::Get().GetLastDirectory(ELastDirectory::GENERIC_IMPORT));
 
 		const bool bFolderSelected = DesktopPlatform->OpenFileDialog(
@@ -202,7 +201,7 @@ FString UAssetsBridgeTools::GetOSFileLocation(const FString &DialogTitle, const 
 	return FString("Unknown");
 }
 
-FString UAssetsBridgeTools::ReadStringFromFile(FString FilePath, bool &bIsSuccessful, FString &OutMessage)
+FString UAssetsBridgeTools::ReadStringFromFile(FString FilePath, bool& bIsSuccessful, FString& OutMessage)
 {
 	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*FilePath))
 	{
@@ -223,7 +222,7 @@ FString UAssetsBridgeTools::ReadStringFromFile(FString FilePath, bool &bIsSucces
 	return Result;
 }
 
-void UAssetsBridgeTools::WriteStringToFile(FString FilePath, FString Data, bool &bIsSuccessful, FString &OutMessage)
+void UAssetsBridgeTools::WriteStringToFile(FString FilePath, FString Data, bool& bIsSuccessful, FString& OutMessage)
 {
 	if (!FFileHelper::SaveStringToFile(Data, *FilePath))
 	{
@@ -235,7 +234,7 @@ void UAssetsBridgeTools::WriteStringToFile(FString FilePath, FString Data, bool 
 	OutMessage = FString::Printf(TEXT("wrote file: %s"), *FilePath);
 }
 
-TSharedPtr<FJsonObject> UAssetsBridgeTools::ReadJson(FString FilePath, bool &bIsSuccessful, FString &OutMessage)
+TSharedPtr<FJsonObject> UAssetsBridgeTools::ReadJson(FString FilePath, bool& bIsSuccessful, FString& OutMessage)
 {
 	FString StringData = ReadStringFromFile(FilePath, bIsSuccessful, OutMessage);
 	if (!bIsSuccessful)
@@ -255,8 +254,8 @@ TSharedPtr<FJsonObject> UAssetsBridgeTools::ReadJson(FString FilePath, bool &bIs
 	return ReturnObj;
 }
 
-void UAssetsBridgeTools::WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool &bIsSuccessful,
-								   FString &OutMessage)
+void UAssetsBridgeTools::WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bIsSuccessful,
+									FString& OutMessage)
 {
 	FString JsonString;
 	if (!FJsonSerializer::Serialize(JsonObject.ToSharedRef(), TJsonWriterFactory<>::Create(&JsonString, 0)))
@@ -274,9 +273,9 @@ void UAssetsBridgeTools::WriteJson(FString FilePath, TSharedPtr<FJsonObject> Jso
 	OutMessage = FString::Printf(TEXT("wrote json to file: %s"), *FilePath);
 }
 
-void UAssetsBridgeTools::GetContentBrowserRoot(FString &OutContentLocation)
+void UAssetsBridgeTools::GetContentBrowserRoot(FString& OutContentLocation)
 {
-	UABSettings *Settings = GetMutableDefault<UABSettings>();
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
 	if (Settings != nullptr)
 	{
 		OutContentLocation = Settings->UnrealContentLocation;
@@ -285,7 +284,7 @@ void UAssetsBridgeTools::GetContentBrowserRoot(FString &OutContentLocation)
 
 FString UAssetsBridgeTools::GetContentBrowserRoot()
 {
-	UABSettings *Settings = GetMutableDefault<UABSettings>();
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
 	if (Settings != nullptr)
 	{
 		return Settings->UnrealContentLocation;
@@ -293,15 +292,15 @@ FString UAssetsBridgeTools::GetContentBrowserRoot()
 	return FString();
 }
 
-TArray<AActor *> UAssetsBridgeTools::GetWorldSelection()
+TArray<AActor*> UAssetsBridgeTools::GetWorldSelection()
 {
-	TArray<AActor *> OutActors;
+	TArray<AActor*> OutActors;
 	// TODO: Add filter for static /skeletal meshes only.
-	USelection *SelectedActors = GEditor->GetSelectedActors();
+	USelection* SelectedActors = GEditor->GetSelectedActors();
 	for (FSelectionIterator Iter(*SelectedActors); Iter; ++Iter)
 	{
-		AActor *Actor = Cast<AActor>(*Iter);
-		TArray<UStaticMeshComponent *> Components;
+		AActor* Actor = Cast<AActor>(*Iter);
+		TArray<UStaticMeshComponent*> Components;
 		Actor->GetComponents(Components);
 		if (Components.Num() > 0)
 		{
@@ -313,7 +312,7 @@ TArray<AActor *> UAssetsBridgeTools::GetWorldSelection()
 
 void UAssetsBridgeTools::SetContentBrowserRoot(FString InLocation)
 {
-	UABSettings *Settings = GetMutableDefault<UABSettings>();
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
 	if (Settings != nullptr)
 	{
 		Settings->UnrealContentLocation = InLocation;
@@ -321,9 +320,9 @@ void UAssetsBridgeTools::SetContentBrowserRoot(FString InLocation)
 	}
 }
 
-void UAssetsBridgeTools::GetExportRoot(FString &OutContentLocation)
+void UAssetsBridgeTools::GetExportRoot(FString& OutContentLocation)
 {
-	UABSettings *Settings = GetMutableDefault<UABSettings>();
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
 	if (Settings != nullptr)
 	{
 		OutContentLocation = Settings->AssetLocationOnDisk;
@@ -332,7 +331,7 @@ void UAssetsBridgeTools::GetExportRoot(FString &OutContentLocation)
 
 void UAssetsBridgeTools::SetExportRoot(FString InLocation)
 {
-	UABSettings *Settings = GetMutableDefault<UABSettings>();
+	UABSettings* Settings = GetMutableDefault<UABSettings>();
 	if (Settings != nullptr)
 	{
 		Settings->AssetLocationOnDisk = InLocation;
@@ -342,8 +341,8 @@ void UAssetsBridgeTools::SetExportRoot(FString InLocation)
 
 FAssetData UAssetsBridgeTools::GetAssetDataFromPath(FString Path)
 {
-	UAssetManager &AssetManager = UAssetManager::Get();
-	const FSoftObjectPath &AssetPath = Path;
+	UAssetManager& AssetManager = UAssetManager::Get();
+	const FSoftObjectPath& AssetPath = Path;
 	FAssetData AssetData;
 	AssetManager.GetAssetDataForPath(AssetPath, AssetData);
 	return AssetData;
@@ -378,7 +377,7 @@ TArray<FAssetData> UAssetsBridgeTools::GetAssetDataFromPaths(TArray<FString> Pat
 	return Assets;
 }
 
-TArray<FAssetData> UAssetsBridgeTools::GetAssetsFromActor(const AActor *InActor)
+TArray<FAssetData> UAssetsBridgeTools::GetAssetsFromActor(const AActor* InActor)
 {
 	TArray<FAssetData> Assets;
 	if (InActor != nullptr)
@@ -413,7 +412,7 @@ TArray<FAssetDetails> UAssetsBridgeTools::GetWorldSelectedAssets()
 	return Items;
 }
 
-FExportAsset UAssetsBridgeTools::GetExportInfo(FAssetData AssetInfo, bool &bIsSuccessful, FString &OutMessage)
+FExportAsset UAssetsBridgeTools::GetExportInfo(FAssetData AssetInfo, bool& bIsSuccessful, FString& OutMessage)
 {
 	FExportAsset Result;
 	FString AssetPath;
@@ -431,7 +430,7 @@ FExportAsset UAssetsBridgeTools::GetExportInfo(FAssetData AssetInfo, bool &bIsSu
 	Result.InternalPath = RelativeContentPath;
 
 	Result.RelativeExportPath = RelativeContentPath;
-	UStaticMesh *StaticMesh = Cast<UStaticMesh>(Result.Model);
+	UStaticMesh* StaticMesh = Cast<UStaticMesh>(Result.Model);
 	if (StaticMesh != nullptr)
 	{
 		Result.StringType = "StaticMesh";
@@ -447,7 +446,7 @@ FExportAsset UAssetsBridgeTools::GetExportInfo(FAssetData AssetInfo, bool &bIsSu
 			return Result;
 		}
 	}
-	USkeletalMesh *SkeletalMesh = Cast<USkeletalMesh>(Result.Model);
+	USkeletalMesh* SkeletalMesh = Cast<USkeletalMesh>(Result.Model);
 	if (SkeletalMesh != nullptr)
 	{
 		Result.StringType = "SkeletalMesh";
@@ -466,76 +465,5 @@ FExportAsset UAssetsBridgeTools::GetExportInfo(FAssetData AssetInfo, bool &bIsSu
 	Result.StringType = "Unknown";
 	bIsSuccessful = true;
 	OutMessage = FString(TEXT("Data retrieved for unknown object"));
-	return Result;
-}
-
-TArray<FExportAsset> UAssetsBridgeTools::GetMeshData(AActor *Actor, bool &bIsSuccessful, FString &OutMessage)
-{
-	TArray<FExportAsset> Result;
-	/*UPackage* ThePackage = Actor->GetPackage();
-	if (ThePackage)
-	{
-		UPackage* Package = FindPackage(NULL, *ThePackage->GetName());
-		FString FooMsg;
-		FPackageId PkgId = ThePackage->GetPackageId();
-		auto selection = GEditor->GetSelectedActors();
-		TArray<TWeakObjectPtr<UObject>> Objects;
-		selection->GetSelectedObjects(Objects);
-		for (auto obj : Objects)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Object name: %s"), *obj->GetName())
-			UE_LOG(LogTemp, Warning, TEXT("Object info: %s"), *obj->GetDetailedInfo())
-		}
-		//FooMsg = selection->GetPathName();
-		//UE_LOG(LogTemp, Warning, TEXT("Package for info: %s"), *FooMsg)
-	}
-
-	TArray<UStaticMeshComponent*> Components;
-	Actor->GetComponents<UStaticMeshComponent>(Components);
-	for (const auto Mesh : Components)
-	{
-		if (Mesh->GetStaticMesh() != nullptr)
-		{
-			FString ContentLocation;
-			GetContentBrowserRoot(ContentLocation);
-			FString ItemPath = Mesh->GetStaticMesh().GetPath();
-			FString AssetPath;
-			GetExportRoot(AssetPath);
-			FString RelativeContentPath;
-			FString ShortName;
-			FString Discard;
-			FPaths::Split(Mesh->GetStaticMesh().GetPath(), RelativeContentPath, ShortName, Discard);
-			//FPaths::MakePathRelativeTo(RelativeContentPath, *FPaths::ProjectContentDir());
-			RelativeContentPath = RelativeContentPath.Replace(TEXT("/Game"), TEXT(""));
-			// TODO READD THIS on actual export: IFileManager::Get().MakeDirectory(*FPaths::Combine(AssetPath, RelativeContentPath), true);
-			// If it starts with Engine or LevelPrototyping I need to ask the user for a new Path & Name as we can't replace engine items.
-			FExportAsset ItemData;
-			ItemData.InternalPath = ItemPath;
-			ItemData.Model = Cast<UObject>(Mesh->GetStaticMesh());
-			if (Mesh->GetStaticMesh() != nullptr)
-			{
-				TArray<FStaticMaterial> Materials = Mesh->GetStaticMesh()->GetStaticMaterials();
-				for (auto Mat : Materials)
-				{
-					FExportMaterial NewMat;
-					NewMat.Name = Mat.MaterialSlotName.ToString();
-					NewMat.InternalPath = Mat.MaterialInterface.GetPath();
-					NewMat.Idx = Mesh->GetStaticMesh()->GetMaterialIndex(FName(NewMat.Name));
-					ItemData.Materials.Add(NewMat);
-					UE_LOG(LogTemp, Warning, TEXT("Adding material: %s"), *NewMat.Name)
-				}
-			}
-			ItemData.ShortName = ShortName;
-			ItemData.RelativeExportPath = RelativeContentPath;
-			FString FileName = ShortName.Append(".fbx");
-			FString ExportLoc = FPaths::Combine(AssetPath, RelativeContentPath, FileName);
-			//UE_LOG(LogTemp, Warning, TEXT("Adding file for export: %s"), *ExportLoc)
-			ItemData.ExportLocation = ExportLoc;
-			Result.Add(ItemData);
-		}
-	}
-
-	bIsSuccessful = true;
-	OutMessage = "Operation Succeeded.";*/
 	return Result;
 }

@@ -24,8 +24,31 @@ struct FMaterialSlot
 	/** Where to find it in the content library. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString InternalPath = "";
+};
 
-	
+USTRUCT(BlueprintType)
+struct FWorldData
+{
+	GENERATED_BODY()
+
+	/** mesh pointer for it will be set here. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Rotation = FVector::ZeroVector;
+
+	/** mesh pointer for it will be set here. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Location = FVector::ZeroVector;
+
+	/** mesh pointer for it will be set here. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Scale = FVector::OneVector;
+
+	void Serialize(FArchive& Archive)
+	{
+		Archive << Rotation;
+		Archive << Location;
+		Archive << Scale;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -36,6 +59,10 @@ struct FExportAsset
 	/** mesh pointer for it will be set here. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UObject* Model = nullptr;
+
+	/** unique object identifier */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString ObjectID = "";
 
 	/** Material information for the object. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
@@ -63,7 +90,7 @@ struct FExportAsset
 
 	/** Location of where to export. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FTransform WorldData = FTransform();
+	FWorldData WorldData = FWorldData();
 	
 };
 
@@ -355,15 +382,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
 	static FExportAsset GetExportInfo(FAssetData AssetInfo, bool& bIsSuccessful, FString& OutMessage);
-	
-	/**
-	 * Gets additional information from a specific actor which will be used in the import / export pipeline.
-	 * @param Actor is the actor that is currently referenced.
-	 * @param bIsSuccessful Returns true of operation is successful.
-	 * @param OutMessage Verbose information on the current operation.
-	 */
-	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
-	static TArray<FExportAsset> GetMeshData(AActor* Actor, bool& bIsSuccessful, FString& OutMessage);
 
 	template <typename T>
 	static FString EnumToString(const FString& enumName, const T value)

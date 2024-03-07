@@ -298,6 +298,8 @@ void FAssetsBridgeModule::RegisterMenus()
 				ImportEntry.SetCommandList(PluginCommands);
 				FToolMenuEntry& MakeEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().MakeAssetAction));
 				MakeEntry.SetCommandList(PluginCommands);
+				FToolMenuEntry& SettingsEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().OpenSettingsWindow));
+				SettingsEntry.SetCommandList(PluginCommands);
 				FToolMenuEntry& SwapEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentSwapAction));
 				SwapEntry.SetCommandList(PluginCommands);
 				FToolMenuEntry& ExportEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentExportAction));
