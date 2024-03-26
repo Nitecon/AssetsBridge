@@ -205,7 +205,7 @@ void UBridgeManager::StartExport(bool& bIsSuccessful, FString& OutMessage)
 				FRotator Rotator = ItemActor->GetActorTransform().GetRotation().Rotator();
 				FWorldData ActorWorldInfo;
 				ActorWorldInfo.Location = ItemActor->GetActorLocation();
-				ActorWorldInfo.Rotation = FVector(Rotator.Roll,Rotator.Pitch, Rotator.Yaw);
+				ActorWorldInfo.Rotation = FVector(Rotator.Roll, Rotator.Pitch, Rotator.Yaw);
 				ActorWorldInfo.Scale = ItemActor->GetActorScale();
 				ExpItem.WorldData = ActorWorldInfo;
 				// Create a checksum from the world data to set as ObjectID
@@ -258,7 +258,7 @@ void UBridgeManager::GenerateExport(TArray<FExportAsset> MeshDataArray, bool& bI
 	bool bExportAll;
 	INodeNameAdapter NodeNameAdapter;
 	Exporter->FillExportOptions(false, false, UExporter::CurrentFilename, bIsCanceled, bExportAll);
-	UFbxExportOption *ExportOptions = Exporter->GetExportOptions();
+	UFbxExportOption* ExportOptions = Exporter->GetExportOptions();
 	ExportOptions->FbxExportCompatibility = EFbxExportCompatibility::FBX_2020;
 	ExportOptions->bForceFrontXAxis = false;
 	ExportOptions->bASCII = false;
@@ -354,7 +354,7 @@ void UBridgeManager::GenerateImport(bool& bIsSuccessful, FString& OutMessage)
 		}
 	}
 	bIsSuccessful = true;
-	
+
 	OutMessage = FString::Printf(TEXT("Operation was successful"));
 }
 
@@ -460,7 +460,7 @@ UObject* UBridgeManager::ProcessTask(UAssetImportTask* ImportTask, bool& bIsSucc
 }
 
 UAssetImportTask* UBridgeManager::CreateImportTask(FString InSourcePath, FString InDestPath, UFactory* InFactory,
-	UObject* ExtraOpts, bool& bIsSuccessful, FString& OutMessage)
+                                                   UObject* ExtraOpts, bool& bIsSuccessful, FString& OutMessage)
 {
 	UAssetImportTask* ResTask = NewObject<UAssetImportTask>();
 	if (ResTask == nullptr)
@@ -472,7 +472,7 @@ UAssetImportTask* UBridgeManager::CreateImportTask(FString InSourcePath, FString
 	ResTask->Filename = InSourcePath;
 	ResTask->DestinationPath = FPaths::GetPath(InDestPath);
 	ResTask->DestinationName = FPaths::GetCleanFilename(InDestPath);
-	
+
 	ResTask->bSave = false;
 	ResTask->bAutomated = true;
 	ResTask->bAsync = false;

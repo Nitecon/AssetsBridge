@@ -53,7 +53,7 @@ struct FBridgeAssets
 	class USkeletalMesh* SkeletalMesh = nullptr;
 
 	/** Where to find it in the content library. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite,	Category="Assets Bridge|Object Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Data")
 	FString InternalPath = "";
 };
 
@@ -83,7 +83,7 @@ struct FBridgeSelection
 	class USkeletalMesh* SkeletalMesh = nullptr;
 
 	/** Where to find it in the content library. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, 	Category="Assets Bridge|Selection Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Selection Data")
 	FTransform ItemLocation = FTransform();
 };
 
@@ -112,18 +112,16 @@ public:
 	TArray<AActor*> CurrentSelection;
 
 	UFUNCTION(BlueprintCallable, Category="AssetsBridge Data")
-	FORCEINLINE TArray<AActor*> GetCurrentSelection() const {return CurrentSelection;}
+	FORCEINLINE TArray<AActor*> GetCurrentSelection() const { return CurrentSelection; }
 
 
 	/** This function finds all iems that the user currently has selected in content browser or in level editor */
-	TArray<AActor*> GetSelectedUserContext() ;
-	
+	TArray<AActor*> GetSelectedUserContext();
 
 private:
 	/** This function is needed to register menus */
 	void RegisterMenus();
 
-	
 
 	/** Starts the settings plugins tab for the user to interact with settings. */
 	TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);

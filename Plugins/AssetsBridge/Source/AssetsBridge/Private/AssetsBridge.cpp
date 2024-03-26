@@ -58,17 +58,22 @@ void FAssetsBridgeModule::StartupModule()
 		FExecuteAction::CreateRaw(this, &FAssetsBridgeModule::ImportButtonClicked),
 		FCanExecuteAction());
 
-	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FAssetsBridgeModule::RegisterMenus));
+	UToolMenus::RegisterStartupCallback(
+		FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FAssetsBridgeModule::RegisterMenus));
 
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(AssetsBridgeTabName, FOnSpawnTab::CreateRaw(this, &FAssetsBridgeModule::OnSpawnPluginTab))
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(AssetsBridgeTabName,
+	                                                  FOnSpawnTab::CreateRaw(
+		                                                  this, &FAssetsBridgeModule::OnSpawnPluginTab))
 	                        .SetDisplayName(LOCTEXT("FAssetsBridgeTabTitle", "AssetsBridge"))
 	                        .SetMenuType(ETabSpawnerMenuType::Hidden);
-	
+
 
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		SettingsModule->RegisterSettings("Project", "Plugins", "AssetsBridge",
-		                                 LOCTEXT("RuntimeSettingsName", "Assets Bridge Settings"), LOCTEXT("RuntimeSettingsDescription", "Setup path locations for assets bridge"),
+		                                 LOCTEXT("RuntimeSettingsName", "Assets Bridge Settings"),
+		                                 LOCTEXT("RuntimeSettingsDescription",
+		                                         "Setup path locations for assets bridge"),
 		                                 GetMutableDefault<UABSettings>());
 	}
 }
@@ -134,7 +139,7 @@ TSharedRef<SDockTab> FAssetsBridgeModule::OnSpawnPluginTab(const FSpawnTabArgs& 
 	return NewDockTab;
 }
 
-TArray<AActor*> FAssetsBridgeModule::GetSelectedUserContext() 
+TArray<AActor*> FAssetsBridgeModule::GetSelectedUserContext()
 {
 	TArray<AActor*> Actors;
 	USelection* SelectedActors = GEditor->GetSelectedActors();
@@ -145,9 +150,8 @@ TArray<AActor*> FAssetsBridgeModule::GetSelectedUserContext()
 		Actor->GetComponents(Components);
 		if (Components.Num() > 0)
 		{
-			Actors.Append(&Actor,1);
+			Actors.Append(&Actor, 1);
 		}
-		
 	}
 	CurrentSelection = Actors;
 	return Actors;
@@ -162,17 +166,20 @@ void FAssetsBridgeModule::MakeAssetButtonClicked()
 	UAssetsBridgeTools::GetSelectedContentBrowserItems(Assets);
 	if (Assets.Num() < 1)
 	{
-		UAssetsBridgeTools::ShowInfoDialog("Nothing selected in content browser: use Ctrl + B(Browse to asset) to select current item in the world.");
+		UAssetsBridgeTools::ShowInfoDialog(
+			"Nothing selected in content browser: use Ctrl + B(Browse to asset) to select current item in the world.");
 		return;
 	}
 	for (FAssetData Asset : Assets)
 	{
 		if (Asset != nullptr)
 		{
-			if (FPaths::IsUnderDirectory(Asset.GetSoftObjectPath().ToString(), UAssetsBridgeTools::GetContentBrowserRoot()))
+			if (FPaths::IsUnderDirectory(Asset.GetSoftObjectPath().ToString(),
+			                             UAssetsBridgeTools::GetContentBrowserRoot()))
 			{
 				UAssetsBridgeTools::ShowInfoDialog("This item is already a part of the assets root");
-			}else
+			}
+			else
 			{
 				FString SourcePackagePath = UAssetsBridgeTools::GetPathWithoutExt(Asset.GetSoftObjectPath().ToString());
 				FString TargetPath = UAssetsBridgeTools::GetSystemPathAsAssetPath(SourcePackagePath);
@@ -180,8 +187,10 @@ void FAssetsBridgeModule::MakeAssetButtonClicked()
 				if (DuplicateObject == nullptr)
 				{
 					bIsSuccessful = false;
-					OutMessage = FString::Printf(TEXT("Cannot duplicate: %s to %s, does it already exist?"), *SourcePackagePath, *TargetPath);
-				}else
+					OutMessage = FString::Printf(
+						TEXT("Cannot duplicate: %s to %s, does it already exist?"), *SourcePackagePath, *TargetPath);
+				}
+				else
 				{
 					TArray<UObject*> SyncObjects;
 					SyncObjects.Add(DuplicateObject);
@@ -189,7 +198,8 @@ void FAssetsBridgeModule::MakeAssetButtonClicked()
 					UAssetsBridgeTools::ShowNotification("Asset snatched...");
 				}
 			}
-		}else
+		}
+		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Invalid asset detected"))
 		}
@@ -197,7 +207,7 @@ void FAssetsBridgeModule::MakeAssetButtonClicked()
 	if (!bIsSuccessful)
 	{
 		UAssetsBridgeTools::ShowNotification(OutMessage);
-	}	
+	}
 }
 
 void FAssetsBridgeModule::SwapButtonClicked()
@@ -212,7 +222,8 @@ void FAssetsBridgeModule::SwapButtonClicked()
 	{
 		FText DialogText = FText::FromString(OutMessage);
 		FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-	}else
+	}
+	else
 	{
 		UAssetsBridgeTools::ShowNotification("Object swapped...");
 	}
@@ -233,7 +244,8 @@ void FAssetsBridgeModule::ExportButtonClicked()
 	if (!bIsSuccessful)
 	{
 		UAssetsBridgeTools::ShowInfoDialog(OutMessage);
-	}else
+	}
+	else
 	{
 		UAssetsBridgeTools::ShowNotification(OutMessage);
 	}
@@ -283,7 +295,8 @@ void FAssetsBridgeModule::RegisterMenus()
 		{
 			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("Settings");
 			{
-				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().OpenSettingsWindow));
+				FToolMenuEntry& Entry = Section.AddEntry(
+					FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().OpenSettingsWindow));
 				Entry.SetCommandList(PluginCommands);
 			}
 		}
@@ -294,15 +307,20 @@ void FAssetsBridgeModule::RegisterMenus()
 		{
 			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("PluginTools");
 			{
-				FToolMenuEntry& ImportEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentImportAction));
+				FToolMenuEntry& ImportEntry = Section.AddEntry(
+					FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentImportAction));
 				ImportEntry.SetCommandList(PluginCommands);
-				FToolMenuEntry& MakeEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().MakeAssetAction));
+				FToolMenuEntry& MakeEntry = Section.AddEntry(
+					FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().MakeAssetAction));
 				MakeEntry.SetCommandList(PluginCommands);
-				FToolMenuEntry& SettingsEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().OpenSettingsWindow));
+				FToolMenuEntry& SettingsEntry = Section.AddEntry(
+					FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().OpenSettingsWindow));
 				SettingsEntry.SetCommandList(PluginCommands);
-				FToolMenuEntry& SwapEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentSwapAction));
+				FToolMenuEntry& SwapEntry = Section.AddEntry(
+					FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentSwapAction));
 				SwapEntry.SetCommandList(PluginCommands);
-				FToolMenuEntry& ExportEntry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentExportAction));
+				FToolMenuEntry& ExportEntry = Section.AddEntry(
+					FToolMenuEntry::InitToolBarButton(FAssetsBridgeCommands::Get().ContentExportAction));
 				ExportEntry.SetCommandList(PluginCommands);
 			}
 		}

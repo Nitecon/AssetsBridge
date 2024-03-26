@@ -10,4 +10,3 @@ UABSettings::UABSettings(const FObjectInitializer& obj)
 	UnrealContentLocation = TEXT("Content/Assets");
 	AssetLocationOnDisk = TEXT("");
 }
-

@@ -13,6 +13,7 @@ UCLASS(config = AssetsBridge)
 class ASSETSBRIDGE_API UABSettings : public UObject
 {
 	GENERATED_BODY()
+
 public:
 	UABSettings(const FObjectInitializer& obj);
 
@@ -21,8 +22,7 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "AssetsLocation")
 	FString AssetLocationOnDisk;
-	
+
 	UPROPERTY(Config, EditAnywhere, Category = "AssetBridgeWorkingDir")
 	FString AssetBridgeWorkingDir;
-
 };

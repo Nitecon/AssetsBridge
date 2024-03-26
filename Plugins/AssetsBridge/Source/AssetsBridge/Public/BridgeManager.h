@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AssetExportTask.h"
 #include "BridgeManager.generated.h"
 
 class UAssetImportTask;
@@ -35,6 +34,7 @@ public:
 	                        FString& OutMessage);
 
 	/**
+	 * DEPRECATED: This function is no longer being used.
 	 * This functions checks to see if the actor path is part of "Engine" content, so it can be duplicated first.
 	 * @param Path This is the path that is to be evaluated whether it is within system directories.
 	 * @return Returns true if it is deemed to be an engine item false otherwise.
@@ -66,6 +66,7 @@ public:
 
 
 	/**
+	 * DEPRECATED: This function is no longer being used.
 	 * This generates a checksum from the FTransform object.
 	 * @param Object the FTransform object to generate a checksum from.
 	 * @return Returns a string representation of the checksum.

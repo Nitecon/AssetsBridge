@@ -20,7 +20,7 @@ struct FMaterialSlot
 	/** Material index */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Material")
 	int Idx = 0;
-	
+
 	/** Where to find it in the content library. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Material")
 	FString InternalPath = "";
@@ -67,7 +67,7 @@ struct FExportAsset
 	/** Material information for the object. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	TArray<FMaterialSlot> ObjectMaterials;
-	
+
 	/** Where to find it in the content library. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString InternalPath = "";
@@ -75,11 +75,11 @@ struct FExportAsset
 	/** Name of the actual file for use in export. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString RelativeExportPath = "";
-	
+
 	/** Name of the actual file for use in export. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString ShortName = "";
-	
+
 	/** Location of where to export. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString ExportLocation = "";
@@ -91,23 +91,21 @@ struct FExportAsset
 	/** Location of where to export. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FWorldData WorldData = FWorldData();
-	
 };
 
-USTRUCT(BlueprintType, Category="JSON")
+USTRUCT(BlueprintType, Category="Assets Bridge|JSON")
 struct FBridgeExport
 {
 	GENERATED_BODY()
 
 public:
 	/** Name of the actual file for use in export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|JSON")
 	FString Operation = "UnrealExport";
 
 	/** Where to find it in the content library. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|JSON")
 	TArray<FExportAsset> Objects;
-
 };
 
 USTRUCT(BlueprintType)
@@ -117,15 +115,13 @@ struct FAssetDetails
 
 public:
 	/** The actor that is currently selected in the world. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Asset Details")
 	TWeakObjectPtr<UObject> WorldObject;
 
 	/** This is the asset for the selected item. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Asset Details")
 	FAssetData ObjectAsset;
-
 };
-
 
 
 class UStruct;
@@ -138,7 +134,6 @@ class ASSETSBRIDGE_API UAssetsBridgeTools : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-
 	/**
 	 * Creates a dialog to inform the user.
 	 * @param Message is the message to be displayed in the dialog for the user to read.
@@ -239,7 +234,8 @@ public:
 	 * @return Provides an FString to be used which contains the location of the file.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
-	static FString GetOSFileLocation(const FString& DialogTitle, const FString& FileTypes = TEXT("JSON files (*.json)|*.json"));
+	static FString GetOSFileLocation(const FString& DialogTitle,
+	                                 const FString& FileTypes = TEXT("JSON files (*.json)|*.json"));
 
 	/**
 	 * Reads a file and returns the content as a string.
@@ -284,7 +280,8 @@ public:
 	* @param bIsSuccessful Returns true of operation is successful.
 	* @param OutMessage Verbose information on the current operation.
 	*/
-	static void WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bIsSuccessful, FString& OutMessage);
+	static void WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bIsSuccessful,
+	                      FString& OutMessage);
 
 	/**
 	* Gets the Assets Bridge location related to this setting.
@@ -350,7 +347,7 @@ public:
 	 * @return the path in relative ot the asset content path.
 	 */
 	static FString GetSystemPathAsAssetPath(FString Path);
-	
+
 	/**
 	 * Get the asset data for a specific paths from the asset manager.
 	 * @param Path is a FString path to the object for which we want to retrieve information
@@ -373,7 +370,7 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category="Assets Bridge Utilities")
 	static TArray<FAssetDetails> GetWorldSelectedAssets();
-	
+
 	/**
 	 * Gets additional information from a specific actor which will be used in the import / export pipeline.
 	 * @param AssetInfo is the actor that should be converted to ExportAsset structure.

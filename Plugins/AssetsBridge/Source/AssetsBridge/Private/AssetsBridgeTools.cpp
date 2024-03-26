@@ -255,7 +255,7 @@ TSharedPtr<FJsonObject> UAssetsBridgeTools::ReadJson(FString FilePath, bool& bIs
 }
 
 void UAssetsBridgeTools::WriteJson(FString FilePath, TSharedPtr<FJsonObject> JsonObject, bool& bIsSuccessful,
-									FString& OutMessage)
+                                   FString& OutMessage)
 {
 	FString JsonString;
 	if (!FJsonSerializer::Serialize(JsonObject.ToSharedRef(), TJsonWriterFactory<>::Create(&JsonString, 0)))

@@ -37,9 +37,9 @@ const FVector2D Icon16x16(16.0f, 16.0f);
 const FVector2D Icon20x20(20.0f, 20.0f);
 const FVector2D IconBar(40.0f, 40.0f);
 
-TSharedRef< FSlateStyleSet > FAssetsBridgeStyle::Create()
+TSharedRef<FSlateStyleSet> FAssetsBridgeStyle::Create()
 {
-	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("AssetsBridgeStyle"));
+	TSharedRef<FSlateStyleSet> Style = MakeShareable(new FSlateStyleSet("AssetsBridgeStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("AssetsBridge")->GetBaseDir() / TEXT("Resources"));
 
 	Style->Set("AssetsBridge.ContentImportAction", new IMAGE_BRUSH_SVG(TEXT("import"), IconBar));
@@ -47,7 +47,7 @@ TSharedRef< FSlateStyleSet > FAssetsBridgeStyle::Create()
 	Style->Set("AssetsBridge.MakeAssetAction", new IMAGE_BRUSH_SVG(TEXT("inasset"), IconBar));
 	Style->Set("AssetsBridge.OpenSettingsWindow", new IMAGE_BRUSH_SVG(TEXT("settings"), IconBar));
 	Style->Set("AssetsBridge.ContentExportAction", new IMAGE_BRUSH_SVG(TEXT("export"), IconBar));
-	
+
 
 	return Style;
 }
