@@ -41,19 +41,19 @@ struct FBridgeAssets
 	GENERATED_BODY()
 
 	/** The type of asset that is contained */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Data")
 	EBridgeType AssetType = EBridgeType::Unknown;
 
 	/** If the item is a static mesh the pointer for it will be set here. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Data")
 	class UStaticMesh* StaticMesh = nullptr;
 
 	/** If the item is a skeletal mesh the pointer for it will be set here. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Data")
 	class USkeletalMesh* SkeletalMesh = nullptr;
 
 	/** Where to find it in the content library. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,	Category="Assets Bridge|Object Data")
 	FString InternalPath = "";
 };
 
@@ -63,27 +63,27 @@ struct FBridgeSelection
 	GENERATED_BODY()
 
 	/** The name of the selected asset */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Selection Data")
 	FString ObjectNameInLevel = "Unknown";
 
 	/** The name of the selected asset */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Selection Data")
 	FTransform ObjectPositionInLevel = FTransform();
 
 	/** The type of asset that is contained */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Selection Data")
 	EBridgeType AssetType = EBridgeType::Unknown;
 
 	/** If the item is a static mesh the pointer for it will be set here. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Selection Data")
 	class UStaticMesh* StaticMesh = nullptr;
 
 	/** If the item is a skeletal mesh the pointer for it will be set here. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Selection Data")
 	class USkeletalMesh* SkeletalMesh = nullptr;
 
 	/** Where to find it in the content library. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, 	Category="Assets Bridge|Selection Data")
 	FTransform ItemLocation = FTransform();
 };
 

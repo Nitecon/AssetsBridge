@@ -20,7 +20,7 @@
 		},
 		{
 			"Name": "GraphNUnrealPlugin",
-			"Enabled": true
+			"Enabled": false
 		}
 	]
 }

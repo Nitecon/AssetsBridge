@@ -14,15 +14,15 @@ struct FMaterialSlot
 	GENERATED_BODY()
 
 	/** Name of the material / slot name. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Material")
 	FString Name = "";
 
 	/** Material index */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Material")
 	int Idx = 0;
 	
 	/** Where to find it in the content library. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Material")
 	FString InternalPath = "";
 };
 
@@ -32,15 +32,15 @@ struct FWorldData
 	GENERATED_BODY()
 
 	/** mesh pointer for it will be set here. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Placement")
 	FVector Rotation = FVector::ZeroVector;
 
 	/** mesh pointer for it will be set here. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Placement")
 	FVector Location = FVector::ZeroVector;
 
 	/** mesh pointer for it will be set here. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Placement")
 	FVector Scale = FVector::OneVector;
 
 	void Serialize(FArchive& Archive)
@@ -57,7 +57,7 @@ struct FExportAsset
 	GENERATED_BODY()
 
 	/** mesh pointer for it will be set here. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	UObject* Model = nullptr;
 
 	/** unique object identifier */
@@ -65,31 +65,31 @@ struct FExportAsset
 	FString ObjectID = "";
 
 	/** Material information for the object. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="JSON")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	TArray<FMaterialSlot> ObjectMaterials;
 	
 	/** Where to find it in the content library. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString InternalPath = "";
 
 	/** Name of the actual file for use in export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString RelativeExportPath = "";
 	
 	/** Name of the actual file for use in export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString ShortName = "";
 	
 	/** Location of where to export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString ExportLocation = "";
 
 	/** Location of where to export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString StringType = "StaticMesh";
 
 	/** Location of where to export. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FWorldData WorldData = FWorldData();
 	
 };
