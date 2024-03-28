@@ -61,7 +61,7 @@ struct FExportAsset
 	UObject* Model = nullptr;
 
 	/** unique object identifier */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Assets Bridge|Object Details")
 	FString ObjectID = "";
 
 	/** Material information for the object. */
