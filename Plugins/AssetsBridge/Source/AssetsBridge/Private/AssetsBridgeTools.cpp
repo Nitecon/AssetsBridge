@@ -10,6 +10,7 @@
 #include "Developer/DesktopPlatform/Public/IDesktopPlatform.h"
 #include "Developer/DesktopPlatform/Public/DesktopPlatformModule.h"
 #include "Engine/AssetManager.h"
+#include "Engine/SkinnedAssetCommon.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Misc/FileHelper.h"
 #include "Serialization/JsonSerializer.h"
